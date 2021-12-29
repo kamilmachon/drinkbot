@@ -51,7 +51,7 @@ private:
         }
     }
 
-    void StopPumpsAfterFinish()
+    void StopPumpsAfterFinish() //TODO: DEBUG this
     {
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
         while (amount_of_active_pumps)
@@ -95,8 +95,8 @@ private:
     void StartPump(int pump_id)
     {
         digitalWrite(pump_id_to_gpio[pump_id], HIGH);
-        amount_of_active_pumps++;
-        Serial.print(amount_of_active_pumps);
+        amount_of_active_pumps++; // This doesn;t work
+        // Serial.print(amount_of_active_pumps);
     }
 
     void StopPump(int pump_id)
