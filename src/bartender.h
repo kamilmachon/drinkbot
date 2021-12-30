@@ -66,7 +66,7 @@ public:
     void StartShaker(int shake_time) // TODO: fix
     {
         DropShaker();
-        // analogWrite(15, 0);
+        analogWrite(13, 128);
         // std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
         // std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
         // while (std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() < shake_time && stop_shaking)
@@ -75,6 +75,8 @@ public:
         //     delay(100);
         // }
         delay(shake_time);
+        analogWrite(13, 0);
+
         // analogWrite(15, 255);
         PullShaker();
     }
@@ -139,8 +141,8 @@ private:
         digitalWrite(servoPullUpPin, LOW);
         delay(pullupTimeMs);
 
-        digitalWrite(servoPullDownPin, HIGH);
-        digitalWrite(servoPullUpPin, HIGH);
+        digitalWrite(servoPullDownPin, LOW);
+        digitalWrite(servoPullUpPin, LOW);
     }
 
     void PullShaker()
@@ -166,5 +168,5 @@ private:
 
     const int servoPullDownPin = 15;
     const int servoPullUpPin = 16;
-    const int pullupTimeMs = 500;
+    const int pullupTimeMs = 250;
 };

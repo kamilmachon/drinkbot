@@ -31,13 +31,13 @@ void setup()
   pinMode(4, OUTPUT); // pump 1 (D2)
   pinMode(14, OUTPUT); // pump 2 (D5)
   pinMode(12, OUTPUT); // pump 3 (D6)
-  // pinMode(13, OUTPUT); // shaker (D7)
+  pinMode(13, OUTPUT); // shaker (D7)
   pinMode(16, OUTPUT); // shaker updown (RX)
   pinMode(15, OUTPUT); // shaker updown (TX)
 
-  digitalWrite(15, HIGH);
-  digitalWrite(16, HIGH);
-  // analogWrite(13, 0);
+  digitalWrite(15, LOW);
+  digitalWrite(16, LOW);
+  analogWrite(13, 0);
   // digitalWrite(9, LOW);
   // digitalWrite(10, LOW);
 
