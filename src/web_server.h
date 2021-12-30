@@ -22,7 +22,7 @@ class Webserver
 
 public:
     Webserver(Servo &srv) : bartender(srv),
-                            server(std::make_unique<AsyncWebServer>(8080))
+                            server(std::make_unique<AsyncWebServer>(8082))
     {
         // Initialize SPIFFS
         if (!SPIFFS.begin())
@@ -43,9 +43,12 @@ public:
         Serial.println(WiFi.localIP());
 
         server->on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+            Serial.print("requested home page");
             request->send(SPIFFS, "/index.html", String(), false, processor);
+
         });
         server->on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request) {
+            Serial.print("requested css");
             request->send(SPIFFS, "/style.css", "text/css");
         });
 
@@ -92,7 +95,7 @@ public:
             Serial.println("setting pumps");
 
             recipe.SetPumps(vec);
-            recipe.SetShakeTime(1.0);
+            recipe.SetShakeTime(1000); //miliseconds
 
             Serial.println("starting");
 
