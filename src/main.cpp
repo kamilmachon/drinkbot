@@ -31,17 +31,17 @@ void setup()
   pinMode(4, OUTPUT); // pump 1 (D2)
   pinMode(14, OUTPUT); // pump 2 (D5)
   pinMode(12, OUTPUT); // pump 3 (D6)
-  pinMode(15, OUTPUT); // shaker (D8)
-  pinMode(9, OUTPUT); // shaker updown (SD2)
-  pinMode(10, OUTPUT); // shaker updown (SD3)
+  // pinMode(13, OUTPUT); // shaker (D7)
+  pinMode(16, OUTPUT); // shaker updown (RX)
+  pinMode(15, OUTPUT); // shaker updown (TX)
 
-  analogWrite(15, 255);
-  digitalWrite(9, LOW);
-  digitalWrite(9, HIGH);
+  // analogWrite(13, 0);
+  // digitalWrite(9, LOW);
+  // digitalWrite(10, LOW);
 
-  pinMode(16, OUTPUT); // trigger ()
+  // pinMode(16, OUTPUT); // trigger ()
 
-  shaker_servo.attach(13); // D(7)
+  // shaker_servo.attach(13); // D(7)
 
   web_server = std::make_unique<Webserver>(shaker_servo);
 
@@ -91,30 +91,9 @@ void loop() {
     default:
       delay(100);
   }
-      // std::vector<float> vec;
-      // vec.push_back(10.0);
-      // vec.push_back(20.0);
-      // vec.push_back(30.0);
-      // vec.push_back(10.0);
-
-      // Serial.println("setting pumps");
-
-      // recipe.SetPumps(vec);
-      // recipe.SetShakeTime(5000);
-
-      // Serial.println("starting");
-
-      // bartender.Start(recipe);
-      // Serial.println("finished");
-      // std::fstream in("/index.html", std::ios_base::in | std::ios_base::binary);
-      // for (int i = 0; i< 10; ++i)
-      // {
-      //   std::string line;
-      //   std::getline(in, line);
-      //   Serial.printf("%s", line);
-      // }
-
-
+    // bartender->StartShaker(1);
+    // delay(1000);
+    // delay(100);
 }
 
 
