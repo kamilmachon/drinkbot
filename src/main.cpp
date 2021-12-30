@@ -35,6 +35,8 @@ void setup()
   pinMode(16, OUTPUT); // shaker updown (RX)
   pinMode(15, OUTPUT); // shaker updown (TX)
 
+  digitalWrite(15, HIGH);
+  digitalWrite(16, HIGH);
   // analogWrite(13, 0);
   // digitalWrite(9, LOW);
   // digitalWrite(10, LOW);

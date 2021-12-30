@@ -137,17 +137,17 @@ private:
         // servo_.write(servo_angle_down);
         digitalWrite(servoPullDownPin, HIGH);
         digitalWrite(servoPullUpPin, LOW);
-        delay(1000);
+        delay(pullupTimeMs);
 
-        digitalWrite(servoPullDownPin, LOW);
-        digitalWrite(servoPullUpPin, LOW);
+        digitalWrite(servoPullDownPin, HIGH);
+        digitalWrite(servoPullUpPin, HIGH);
     }
 
     void PullShaker()
     {
         digitalWrite(servoPullDownPin, LOW);
         digitalWrite(servoPullUpPin, HIGH);
-        delay(1000);
+        delay(pullupTimeMs);
 
         digitalWrite(servoPullDownPin, LOW);
         digitalWrite(servoPullUpPin, LOW);
@@ -166,4 +166,5 @@ private:
 
     const int servoPullDownPin = 15;
     const int servoPullUpPin = 16;
+    const int pullupTimeMs = 500;
 };
