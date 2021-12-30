@@ -10,16 +10,27 @@
     <iframe name="hiddenFrame" class="hide"></iframe>
     <FORM action="/send" method="post" target="hiddenFrame">
         <div id="pumps"> <input type="range" name="pump1" min="0" max="100" value="50" class="slider" id="pump1"
-                oninput="pump1out.value='Pompa 1: ' + this.value + 'ml'" cls="pump"> <input type="range" name="pump2"
+                oninput="pump1out.value='Pompa 1: ' + this.value + 'ml'" cls="pump"> 
+                <input type="range" name="pump2"
                 min="0" max="100" value="50" class="slider" id="pump2"
-                oninput="pump2out.value='Pompa 2: ' + this.value + 'ml'" cls="pump"> <input type="range" name="pump3"
+                oninput="pump2out.value='Pompa 2: ' + this.value + 'ml'" cls="pump"> 
+                <input type="range" name="pump3"
                 min="0" max="100" value="50" class="slider" id="pump3"
-                oninput="pump3out.value='Pompa 3: ' + this.value + 'ml'" cls="pump"> <input type="range" name="pump4"
+                oninput="pump3out.value='Pompa 3: ' + this.value + 'ml'" cls="pump"> 
+                <input type="range" name="pump4"
                 min="0" max="100" value="50" class="slider" id="pump4"
-                oninput="pump4out.value='Pompa 4: ' + this.value + 'ml'" cls="pump"> <output name="pump1out"
+                oninput="pump4out.value='Pompa 4: ' + this.value + 'ml'" cls="pump"> 
+                <input type="range" name="shake_time" min="0" max="10000" value="5000" step="1000" class="slider" id="shake_time" cls="pump"
+                    oninput="shaketimeout.value='Czas: ' + this.value/1000 + 's'"
+                >
+            
+                <output name="pump1out"
                 id="pump1out" cls="pump">Pompa 1: 50 ml</output> <output name="pump2out" id="pump2out" cls="pump">Pompa
                 2: 50 ml</output> <output name="pump3out" id="pump3out" cls="pump">Pompa 3: 50 ml</output> <output
-                name="pump4out" id="pump4out" cls="pump">Pompa 4: 50 ml</output> </div>
+                name="pump4out" id="pump4out" cls="pump">Pompa 4: 50 ml</output> 
+                <output name="shake_time" id="shaketimeout" cls="pump">Czas: 5 s</output>
+
+            </div>
         <div id="shakes"> <INPUT type="submit" name="Send" value="Jazda z kurwami"> </div>
     </FORM>
     <div id="shakes">

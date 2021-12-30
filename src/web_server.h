@@ -77,11 +77,12 @@ public:
             {
                 Serial.printf("%s\n", request->argName(i));
             }
-            // float pump_1 = request->getParam("pump1")->value().toFloat();
-            // float pump_2 = request->getParam("pump2")->value().toFloat();
-            // float pump_3 = request->getParam("pump3")->value().toFloat();
-            // float pump_4 = request->getParam("pump4")->value().toFloat();
-            // String shake_time_str = request->getParam("shake_time")->value();
+            float pump_1 = request->getParam("pump1", true)->value().toFloat();
+            float pump_2 = request->getParam("pump2", true)->value().toFloat();
+            float pump_3 = request->getParam("pump3", true)->value().toFloat();
+            float pump_4 = request->getParam("pump4", true)->value().toFloat();
+            
+            int shake_time = request->getParam("shake_time", true)->value().toInt();
 
             // Serial.printf("request: pump1: %f, pump2: %f, pump3: %f, pump4: %f", pump_1, pump_2, pump_3, pump_4);
 
@@ -91,20 +92,20 @@ public:
             // pump3_ml = std::stof(pump_3);
             // pump4_ml = std::stof(pump_4);
             // shake_time = static_cast<float>(shake_time_str.toInt());
-            float shake_time = 1.0;
+            // float shake_time = 1.0;
 
             Recipe recipe;
 
             std::vector<float> vec;
-            vec.push_back(10.0);
-            vec.push_back(10.0);
-            vec.push_back(10.0);
-            vec.push_back(10.0);
+            vec.push_back(pump_1);
+            vec.push_back(pump_2);
+            vec.push_back(pump_3);
+            vec.push_back(pump_4);
 
             Serial.println("setting pumps");
 
             recipe.SetPumps(vec);
-            recipe.SetShakeTime(1000); //miliseconds
+            recipe.SetShakeTime(shake_time); //miliseconds
             
             Serial.println("starting");
             currentRecipe = recipe;
