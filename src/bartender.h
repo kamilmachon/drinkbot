@@ -113,7 +113,7 @@ private:
     void StartShaker(int shake_time) // TODO: fix
     {
         DropShaker();
-        digitalWrite(15, HIGH);
+        analogWrite(15, 0);
         // std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
         // std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
         // while (std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() < shake_time && stop_shaking)
@@ -122,18 +122,28 @@ private:
         //     delay(100);
         // }
         delay(shake_time);
-        digitalWrite(15, LOW);
+        analogWrite(15, 255);
         PullShaker();
     }
 
     void DropShaker()
     {
-        servo_.write(servo_angle_down);
+        // servo_.write(servo_angle_down);
+        digitalWrite(servoPullDownPin, HIGH);
+        digitalWrite(servoPullUpPin, LOW);
+        delay(1000);
+        digitalWrite(servoPullDownPin, LOW);
+        digitalWrite(servoPullUpPin, LOW);
     }
 
     void PullShaker()
     {
-        servo_.write(servo_angle_up);
+        // servo_.write(servo_angle_up);
+        digitalWrite(servoPullDownPin, LOW);
+        digitalWrite(servoPullUpPin, HIGH);
+        delay(1000);
+        digitalWrite(servoPullDownPin, LOW);
+        digitalWrite(servoPullUpPin, LOW);
     }
 
     std::map<int, float> time_left_on_pumps;
@@ -150,4 +160,7 @@ private:
                                           {1, 4},
                                           {2, 14},
                                           {3, 12}};
+
+    const int servoPullDownPin = 9;
+    const int servoPullUpPin = 10;
 };

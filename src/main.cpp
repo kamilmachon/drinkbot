@@ -31,7 +31,11 @@ void setup()
   pinMode(14, OUTPUT); // pump 2 (D5)
   pinMode(12, OUTPUT); // pump 3 (D6)
   pinMode(15, OUTPUT); // shaker (D8)
-  analogWrite(15, 0);
+  pinMode(9, OUTPUT); // shaker down (DS2)
+  pinMode(10, OUTPUT); // shaker up (DS3)
+
+  analogWrite(15, 255);
+
 
 
   pinMode(16, OUTPUT); // trigger ()
@@ -51,7 +55,9 @@ void loop() {
     case RequestState::received:
     {
       web_server->currentRequestState = RequestState::in_progress;
-      bartender->Start(web_server->currentRecipe);
+  analogWrite(15, 255);
+  analogWrite(15, 255);
+      t(web_server->currentRecipe);
       web_server->currentRequestState = RequestState::idle;
     }
     case RequestState::stop:
