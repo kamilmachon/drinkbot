@@ -12,6 +12,10 @@
 class Bartender
 {
 public:
+    std::map<int, float> time_left_on_pumps;
+    std::vector<bool> pumps_status{false, false, false, false};
+
+    Recipe current_recipe;
     Bartender(Servo &servo) : servo_(servo)
     {
     }
@@ -23,13 +27,13 @@ public:
         Serial.print("starting pumps\n");
         StartPumps();
         Serial.print("wait for pumps\n");
-        StopPumpsAfterFinish();
-        Serial.print("shake\n");
-        if (current_recipe.GetShakeTime() > 0)
-        {
-            StartShaker(current_recipe.GetShakeTime());
-        }
-        Serial.print("finished\n");
+        // StopPumpsAfterFinish();
+        // Serial.print("shake\n");
+        // if (current_recipe.GetShakeTime() > 0)
+        // {
+        //     StartShaker(current_recipe.GetShakeTime());
+        // }
+        // Serial.print("finished\n");
     }
 
     void Stop()
@@ -39,6 +43,40 @@ public:
             StopPump(pump_it.first);
         }
         stop_shaking = true;
+    }
+
+    void StopPump(int pump_id)
+    {
+        digitalWrite(pump_id_to_gpio[pump_id], LOW);
+        pumps_status[pump_id] = false;
+    }
+    
+    bool IsPumpActive()
+    {
+        for (auto pump : pumps_status)
+        {
+            if (pump)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void StartShaker(int shake_time) // TODO: fix
+    {
+        DropShaker();
+        analogWrite(15, 0);
+        // std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+        // std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+        // while (std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() < shake_time && stop_shaking)
+        // {
+        //     end = std::chrono::steady_clock::now();
+        //     delay(100);
+        // }
+        delay(shake_time);
+        analogWrite(15, 255);
+        PullShaker();
     }
 
 private:
@@ -56,35 +94,35 @@ private:
         }
     }
 
-    void StopPumpsAfterFinish()
-    {
-        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-        Serial.print("before while");
-        // while (IsPumpActive())
-        while (IsPumpActive())
+    // void StopPumpsAfterFinish()
+    // {
+    //     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    //     Serial.print("before while");
+    //     // while (IsPumpActive())
+    //     while (IsPumpActive())
 
-        {
-            // Serial.print("1");
-            std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-            // Serial.print("2");
-            auto miliseconds_passed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
-            // Serial.print("3");
-            for (auto it = time_left_on_pumps.begin(); it != time_left_on_pumps.end(); ++it)
-            {
-                // Serial.print("4");
-                // Serial.printf("pump id: %d \n", it->first);
-                if (it->second - (static_cast<float>(miliseconds_passed) / 1000.0) < 0 && pumps_status[it->first])
-                {
-                    // Serial.print("5");
-                    StopPump(it->first);
-                }
-            }
-            // Serial.print("6");
-            delay(10);
-            // Serial.print("6.5");
-        }
-        // Serial.print("7");
-    }
+    //     {
+    //         // Serial.print("1");
+    //         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    //         // Serial.print("2");
+    //         auto miliseconds_passed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
+    //         // Serial.print("3");
+    //         for (auto it = time_left_on_pumps.begin(); it != time_left_on_pumps.end(); ++it)
+    //         {
+    //             // Serial.print("4");
+    //             // Serial.printf("pump id: %d \n", it->first);
+    //             if (it->second - (static_cast<float>(miliseconds_passed) / 1000.0) < 0 && pumps_status[it->first])
+    //             {
+    //                 // Serial.print("5");
+    //                 StopPump(it->first);
+    //             }
+    //         }
+    //         // Serial.print("6");
+    //         delay(10);
+    //         // Serial.print("6.5");
+    //     }
+    //     // Serial.print("7");
+    // }
 
     void StartPump(int pump_id)
     {
@@ -92,54 +130,29 @@ private:
         pumps_status[pump_id] = true;
     }
 
-    void StopPump(int pump_id)
-    {
-        digitalWrite(pump_id_to_gpio[pump_id], LOW);
-        pumps_status[pump_id] = false;
-    }
-
-    bool IsPumpActive()
-    {
-        for (auto pump : pumps_status)
-        {
-            if (pump)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    void StartShaker(int shake_time) // TODO: fix
-    {
-        DropShaker();
-        digitalWrite(15, HIGH);
-        // std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-        // std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-        // while (std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() < shake_time && stop_shaking)
-        // {
-        //     end = std::chrono::steady_clock::now();
-        //     delay(100);
-        // }
-        delay(shake_time);
-        digitalWrite(15, LOW);
-        PullShaker();
-    }
-
+   
     void DropShaker()
     {
-        servo_.write(servo_angle_down);
+        // 9, 10 do inicjalizacji - op[isac w komentarzu jako SD2 i SD3
+        // servo_.write(servo_angle_down);
+        digitalWrite(servoPullDownPin, HIGH);
+        digitalWrite(servoPullUpPin, LOW);
+        delay(1000);
+
+        digitalWrite(servoPullDownPin, LOW);
+        digitalWrite(servoPullUpPin, LOW);
     }
 
     void PullShaker()
     {
-        servo_.write(servo_angle_up);
+        digitalWrite(servoPullDownPin, LOW);
+        digitalWrite(servoPullUpPin, HIGH);
+        delay(1000);
+
+        digitalWrite(servoPullDownPin, LOW);
+        digitalWrite(servoPullUpPin, LOW);
     }
 
-    std::map<int, float> time_left_on_pumps;
-    std::vector<bool> pumps_status{false, false, false, false};
-
-    Recipe current_recipe;
     Servo servo_;
 
     int servo_angle_up = 180;
@@ -150,4 +163,7 @@ private:
                                           {1, 4},
                                           {2, 14},
                                           {3, 12}};
+
+    const int servoPullDownPin = 9;
+    const int servoPullUpPin = 10;
 };
