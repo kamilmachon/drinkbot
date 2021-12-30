@@ -22,8 +22,8 @@
 
 Servo shaker_servo;
 std::unique_ptr<Webserver> web_server;
-
-void setup() 
+std::unique_ptr<Bartender> bartender;
+void setup()
 {
   Serial.begin(115200);
   pinMode(5, OUTPUT); // pump 0 (D1)
@@ -39,37 +39,52 @@ void setup()
   shaker_servo.attach(13); // D(7)
 
   web_server = std::make_unique<Webserver>(shaker_servo);
+
+  Recipe recipe;
+  bartender = std::make_unique<Bartender>(shaker_servo);
 }
 
-Recipe recipe;
-Bartender bartender(shaker_servo);
 
 
 void loop() {
-  // std::vector<float> vec;
-  // vec.push_back(10.0);
-  // vec.push_back(20.0);
-  // vec.push_back(30.0);
-  // vec.push_back(10.0);
+  switch (web_server->currentRequestState){
+    case RequestState::received:
+    {
+      web_server->currentRequestState = RequestState::in_progress;
+      bartender->Start(web_server->currentRecipe);
+      web_server->currentRequestState = RequestState::idle;
+    }
+    case RequestState::stop:
+    {
+      bartender->Stop();
+      web_server->currentRequestState = RequestState::idle;
+    }
+    default:
+      delay(100);
+  }
+      // std::vector<float> vec;
+      // vec.push_back(10.0);
+      // vec.push_back(20.0);
+      // vec.push_back(30.0);
+      // vec.push_back(10.0);
 
-  // Serial.println("setting pumps");
+      // Serial.println("setting pumps");
 
-  // recipe.SetPumps(vec);
-  // recipe.SetShakeTime(5000);
+      // recipe.SetPumps(vec);
+      // recipe.SetShakeTime(5000);
 
-  // Serial.println("starting");
+      // Serial.println("starting");
 
-  // bartender.Start(recipe);
-  // Serial.println("finished");
-  // std::fstream in("/index.html", std::ios_base::in | std::ios_base::binary);
-  // for (int i = 0; i< 10; ++i)
-  // {
-  //   std::string line;
-  //   std::getline(in, line);
-  //   Serial.printf("%s", line);
-  // }  
+      // bartender.Start(recipe);
+      // Serial.println("finished");
+      // std::fstream in("/index.html", std::ios_base::in | std::ios_base::binary);
+      // for (int i = 0; i< 10; ++i)
+      // {
+      //   std::string line;
+      //   std::getline(in, line);
+      //   Serial.printf("%s", line);
+      // }
 
-  delay(1000);
 
 }
 

@@ -17,10 +17,19 @@ String processor(const String &var)
     return String();
 }
 
+enum RequestState{
+    idle,
+    received,
+    in_progress,
+    stop
+};
+
 class Webserver
 {
 
 public:
+    RequestState currentRequestState;
+    Recipe currentRecipe;
     Webserver(Servo &srv) : bartender(srv),
                             server(std::make_unique<AsyncWebServer>(8082))
     {
@@ -96,10 +105,11 @@ public:
 
             recipe.SetPumps(vec);
             recipe.SetShakeTime(1000); //miliseconds
-
+            
             Serial.println("starting");
-
-            bartender.Start(recipe);
+            currentRecipe = recipe;
+            currentRequestState = RequestState::received;
+            // bartender.Start(recipe);
 
             Serial.println("response");
 
@@ -113,11 +123,14 @@ public:
 
     void handleStopRequest(AsyncWebServerRequest *request)
     {
-        bartender.Stop();
+        // bartender.Stop();
+        currentRequestState = RequestState::stop;
         request->send(200, "text/plain", "OK");
     }
 
 private:
     Bartender bartender;
     std::unique_ptr<AsyncWebServer> server;
+
+    
 };

@@ -56,22 +56,34 @@ private:
         }
     }
 
-    void StopPumpsAfterFinish() // TODO: DEBUG this
+    void StopPumpsAfterFinish()
     {
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+        Serial.print("before while");
+        // while (IsPumpActive())
         while (IsPumpActive())
+
         {
+            // Serial.print("1");
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+            // Serial.print("2");
             auto miliseconds_passed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
+            // Serial.print("3");
             for (auto it = time_left_on_pumps.begin(); it != time_left_on_pumps.end(); ++it)
             {
+                // Serial.print("4");
+                // Serial.printf("pump id: %d \n", it->first);
                 if (it->second - (static_cast<float>(miliseconds_passed) / 1000.0) < 0 && pumps_status[it->first])
                 {
+                    // Serial.print("5");
                     StopPump(it->first);
                 }
             }
+            // Serial.print("6");
             delay(10);
+            // Serial.print("6.5");
         }
+        // Serial.print("7");
     }
 
     void StartPump(int pump_id)
@@ -102,13 +114,14 @@ private:
     {
         DropShaker();
         analogWrite(15, 128);
-        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-        while (std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() < shake_time && stop_shaking)
-        {
-            end = std::chrono::steady_clock::now();
-            delay(100);
-        }
+        // std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+        // std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+        // while (std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() < shake_time && stop_shaking)
+        // {
+        //     end = std::chrono::steady_clock::now();
+        //     delay(100);
+        // }
+        delay(shake_time);
         analogWrite(15, 0);
         PullShaker();
     }
