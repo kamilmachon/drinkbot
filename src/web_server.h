@@ -69,7 +69,10 @@ public:
     }
 
     void handleSendRequest(AsyncWebServerRequest *request)
-    {
+    {   
+        if (currentRequestState != RequestState::idle){
+            request->send(400, "text/plain", "kurwa czekaj");
+        }
         try
         {
             Serial.println("received send request");
