@@ -9,16 +9,16 @@
 <body>
     <iframe name="hiddenFrame" class="hide"></iframe>
     <FORM action="/send" method="post" target="hiddenFrame">
-        <div id="pumps"> <input type="range" name="pump1" min="0" max="10" value="5" class="slider" id="pump1"
+        <div id="pumps"> <input type="range" name="pump1" min="0" max="15" value="5" class="slider" id="pump1"
                 oninput="pump1out.value='Pompa 1: ' + this.value + 's'" cls="pump"> 
                 <input type="range" name="pump2"
-                min="0" max="10" value="5" class="slider" id="pump2"
+                min="0" max="15" value="5" class="slider" id="pump2"
                 oninput="pump2out.value='Pompa 2: ' + this.value + 's'" cls="pump"> 
                 <input type="range" name="pump3"
-                min="0" max="10" value="5" class="slider" id="pump3"
+                min="0" max="15" value="5" class="slider" id="pump3"
                 oninput="pump3out.value='Pompa 3: ' + this.value + 's'" cls="pump"> 
                 <input type="range" name="pump4"
-                min="0" max="10" value="5" class="slider" id="pump4"
+                min="0" max="15" value="5" class="slider" id="pump4"
                 oninput="pump4out.value='Pompa 4: ' + this.value + 's'" cls="pump"> 
                 <input type="range" name="shake_time" min="0" max="10000" value="5000" step="1000" class="slider" id="shake_time" cls="pump"
                     oninput="shaketimeout.value='Czas: ' + this.value/1000 + 's'"
@@ -38,13 +38,13 @@
         </form>
     </div>
     <div id="peniorgrid">
-        <div id="buttons"> <button type="button" onclick="setPumpValuesToSour()" id="sourButton">Blazej</button> <button
+        <div id="buttons"> <button type="button" onclick="setPumpValuesToSour()" id="sourButton">Whisky Sour</button> <button
                 type="button" id="whiskyButton" onclick="setPumpValuesToWhiskyAndCoke()">Cienias</button> <button
                 type="button" id="vocokeButton" onclick="setPumpValuesToVodkaAndCoke()">Chad</button> <button
                 type="button" id="koluszButton" onclick="setPumpValuesToKolusz()">Kolusz</button> </div>
     </div>
     <script
-        defer> function setPumpValue(pump_id, value) { var pump = document.getElementById(pump_id); pump.value = value; pump.oninput(); } function setPumpValuesToSour() { console.log('dupa'); setPumpValue('pump1', 5); setPumpValue('pump2', 5); setPumpValue('pump3', 5); setPumpValue('pump4', 5); } function setPumpValuesToWhiskyAndCoke() { setPumpValue('pump1', 5); setPumpValue('pump2', 5); setPumpValue('pump3', 5); setPumpValue('pump4', 5); } function setPumpValuesToVodkaAndCoke() { setPumpValue('pump1', 5); setPumpValue('pump2', 5); setPumpValue('pump3', 5); setPumpValue('pump4', 5); } function setPumpValuesToKolusz() { setPumpValue('pump1', 5); setPumpValue('pump2', 5); setPumpValue('pump3', 5); setPumpValue('pump4', 5); }</script>
+        defer> function setPumpValue(pump_id, value) { var pump = document.getElementById(pump_id); pump.value = value; pump.oninput(); } function setPumpValuesToSour() { console.log('dupa'); setPumpValue('pump1', 7); setPumpValue('pump2', 4); setPumpValue('pump3', 4); setPumpValue('pump4', 0); } function setPumpValuesToWhiskyAndCoke() { setPumpValue('pump1', 5); setPumpValue('pump2', 5); setPumpValue('pump3', 5); setPumpValue('pump4', 5); } function setPumpValuesToVodkaAndCoke() { setPumpValue('pump1', 5); setPumpValue('pump2', 5); setPumpValue('pump3', 5); setPumpValue('pump4', 5); } function setPumpValuesToKolusz() { setPumpValue('pump1', 5); setPumpValue('pump2', 5); setPumpValue('pump3', 5); setPumpValue('pump4', 5); }</script>
     <style>
         .hide { position:absolute; top:-1px; left:-1px; width:1px; height:1px; }
     </style>    
