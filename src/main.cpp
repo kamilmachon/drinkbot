@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <AsyncElegantOTA.h>
 
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
@@ -14,7 +15,7 @@
 #include <bartender.h>
 #include <recipe.h>
 #include <web_server.h>
-#include <html.h>
+#include <config.h>
 #include "FS.h"
 
 #include <fstream>
@@ -27,23 +28,21 @@ std::chrono::steady_clock::time_point begin;
 void setup()
 {
   Serial.begin(115200);
-  pinMode(5, OUTPUT); // pump 0 (D1)
-  pinMode(4, OUTPUT); // pump 1 (D2)
-  pinMode(14, OUTPUT); // pump 2 (D5)
-  pinMode(12, OUTPUT); // pump 3 (D6)
-  pinMode(13, OUTPUT); // shaker (D7)
-  pinMode(16, OUTPUT); // shaker updown (RX)
-  pinMode(15, OUTPUT); // shaker updown (TX)
+  
+  analogWriteFreq(PWM_FREQ);
 
-  digitalWrite(15, LOW);
-  digitalWrite(16, LOW);
-  analogWrite(13, 0);
-  // digitalWrite(9, LOW);
-  // digitalWrite(10, LOW);
+  analogWrite(PUMPS_PWM_PIN, 0);
+  pinMode(M1_FWD_PIN, OUTPUT); // pump 1
+  pinMode(M2_FWD_PIN, OUTPUT); // pump 2
+  pinMode(M3_FWD_PIN, OUTPUT); // pump 3
+  pinMode(M4_FWD_PIN, OUTPUT); // pump 4
 
-  // pinMode(16, OUTPUT); // trigger ()
+  analogWrite(MX_PWM_PIN, 0);
+  pinMode(MX_FWD_PIN, OUTPUT); // shaker (D7)
 
-  // shaker_servo.attach(13); // D(7)
+  analogWrite(SRV_PWM_PIN, 0);
+  pinMode(SRV_UP_PIN, OUTPUT); // shaker updown (RX)
+  pinMode(SRV_DOWN_PIN, OUTPUT); // shaker updown (TX)
 
   web_server = std::make_unique<Webserver>(shaker_servo);
 

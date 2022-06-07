@@ -1,13 +1,11 @@
 #pragma once
 
 #include <Adafruit_NeoPixel.h>
-// type correct number of pins
-// verify num of pixels
-#define LED 8
-#define NUMPIXELS 20
-#define DELAYVAL 500
 
-Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+#include "config.h"
+
+
+Adafruit_NeoPixel pixels(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
 
 class Led
 {

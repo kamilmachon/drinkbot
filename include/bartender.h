@@ -9,6 +9,8 @@
 #include <thread>
 #include <unistd.h>
 
+#include <config.h>
+
 class Bartender
 {
 public:
@@ -66,7 +68,8 @@ public:
     void StartShaker(int shake_time) // TODO: fix
     {
         DropShaker();
-        analogWrite(13, 128);
+        analogWrite(MX_PWM_PIN, 64);
+        digitalWrite(MX_FWD_PIN, 1);
         // std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
         // std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
         // while (std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() < shake_time && stop_shaking)
@@ -75,7 +78,7 @@ public:
         //     delay(100);
         // }
         delay(shake_time);
-        analogWrite(13, 0);
+        digitalWrite(MX_FWD_PIN, 0);
 
         // analogWrite(15, 255);
         PullShaker();
@@ -137,22 +140,24 @@ private:
     {
         // 9, 10 do inicjalizacji - op[isac w komentarzu jako SD2 i SD3
         // servo_.write(servo_angle_down);
-        digitalWrite(servoPullDownPin, HIGH);
-        digitalWrite(servoPullUpPin, LOW);
+        analogWrite(SRV_PWM_PIN, 128);
+        digitalWrite(SRV_DOWN_PIN, HIGH);
+        digitalWrite(SRV_UP_PIN, LOW);
         delay(pullupTimeMs);
 
-        digitalWrite(servoPullDownPin, LOW);
-        digitalWrite(servoPullUpPin, LOW);
+        digitalWrite(SRV_DOWN_PIN, LOW);
+        digitalWrite(SRV_UP_PIN, LOW);
     }
 
     void PullShaker()
     {
-        digitalWrite(servoPullDownPin, LOW);
-        digitalWrite(servoPullUpPin, HIGH);
+        analogWrite(SRV_PWM_PIN, 128);
+        digitalWrite(SRV_DOWN_PIN, LOW);
+        digitalWrite(SRV_UP_PIN, HIGH);
         delay(pullupTimeMs);
 
-        digitalWrite(servoPullDownPin, LOW);
-        digitalWrite(servoPullUpPin, LOW);
+        digitalWrite(SRV_DOWN_PIN, LOW);
+        digitalWrite(SRV_UP_PIN, LOW);
     }
 
     Servo servo_;
@@ -161,12 +166,10 @@ private:
     int servo_angle_down = 300;
     bool stop_shaking = false;
 
-    std::map<int, int> pump_id_to_gpio = {{0, 5},
-                                          {1, 4},
-                                          {2, 14},
-                                          {3, 12}};
+    std::map<int, int> pump_id_to_gpio = {{0, M1_FWD_PIN},
+                                          {1, M2_FWD_PIN},
+                                          {2, M3_FWD_PIN},
+                                          {3, M4_FWD_PIN}};
 
-    const int servoPullDownPin = 15;
-    const int servoPullUpPin = 16;
     const int pullupTimeMs = 250;
 };
