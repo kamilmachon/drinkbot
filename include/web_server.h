@@ -6,6 +6,7 @@
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+// #include <AsyncElegantOTA.h>
 #include <Servo.h>
 #include <LittleFS.h>
 
@@ -84,7 +85,7 @@ public:
         
         
         Serial.println("starting srv");
-        AsyncElegantOTA.begin(server.get());
+        // AsyncElegantOTA.begin(server.get());
         server->begin();
         Serial.println("server running");
     }
