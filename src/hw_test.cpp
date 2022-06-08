@@ -39,12 +39,18 @@ AsyncWebServer server(PORT);
 
   void setup_server()
   {
+
+    if (!LittleFS.begin())
+    {
+        Serial.printf("An Error has occurred while mounting LittleFS");
+        return;
+    }
     // AsyncElegantOTA.begin(&server);
 
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-              Serial.print("requested home page");
+              Serial.print("requested home page ");
+              Serial.println(LittleFS.exists("/index_test.html") ? "File found" : "File not found");
               request->send(LittleFS, "/index_test.html", String(), false, processor);
-
           });
 
     server.begin();
@@ -215,7 +221,7 @@ void setup()
     Serial.print("Server setup...");
     setup_server();
     Serial.println("done");
-    Serial.print("Server runnint on port: ");
+    Serial.print("Server running on port: ");
     Serial.println(PORT);
   #endif
 
