@@ -33,6 +33,9 @@ unsigned long web_pump_time = 0,
               web_mixer_time = 0,
               web_head_time = 0;
 
+
+#define SERIAL_FILL_VAR(value, fill) for (int i = fill - ((value == 0) ? 1 : 0), v = value; i>0; i--, v/=10) Serial.print((v == 0) ? " " : "");
+
 #ifdef WIFI_TEST
   void setup_wifi_ap()
   {
@@ -134,11 +137,13 @@ unsigned long web_pump_time = 0,
         web_pump_pwm = request->getParam("PPWM")->value().toInt();
       Serial.print(" PWM:");
       Serial.print(web_pump_pwm);
-
+      SERIAL_FILL_VAR(web_pump_pwm, 3)
+      
       if (request->hasParam("PT"))  
         web_pump_time = request->getParam("PT")->value().toInt();
       Serial.print(" PT:");
       Serial.print(web_pump_time);
+      SERIAL_FILL_VAR(web_pump_time, 4)
 
       web_pump1_state = request->hasParam("P1");
       Serial.print(" P1:");
@@ -162,11 +167,13 @@ unsigned long web_pump_time = 0,
         web_mx_pwm = request->getParam("MXPWM")->value().toInt();
       Serial.print(" PWM:");
       Serial.print(web_mx_pwm);
+      SERIAL_FILL_VAR(web_mx_pwm, 3)
 
       if (request->hasParam("MT"))
         web_mixer_time = request->getParam("MT")->value().toInt();
       Serial.print(" MT:");
       Serial.print(web_mixer_time);
+      SERIAL_FILL_VAR(web_mixer_time, 4)
 
       web_mixer_state = request->hasParam("MX");
       Serial.print(" MX:");
@@ -178,10 +185,13 @@ unsigned long web_pump_time = 0,
         web_srv_pwm = request->getParam("SPWM")->value().toInt();
       Serial.print(" PWM:");
       Serial.print(web_srv_pwm);
+      SERIAL_FILL_VAR(web_srv_pwm, 3)
 
       if (request->hasParam("ST"))
         web_head_time = request->getParam("ST")->value().toInt();
       Serial.print(" ST:");
+      Serial.print(web_head_time);
+      SERIAL_FILL_VAR(web_head_time, 4)
 
       web_up_state = request->hasParam("UP");
       Serial.print(" UP:");
@@ -190,8 +200,6 @@ unsigned long web_pump_time = 0,
       web_down_state = request->hasParam("DOWN");
       Serial.print(" DOWN:");
       Serial.println(web_down_state);
-
-      Serial.print(web_head_time);
 
       request->redirect("/");
     });
