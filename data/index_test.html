@@ -9,8 +9,8 @@
   <div>
     <form action="/send">
       <input type="submit" value="Send values">
-      <h2>Pumps</h2>
       <div>
+        <h2>Pumps</h2>
         <label>PWM&nbsp<output id="ppwm_val">%PPWM%</output>
           <input type="range" min="0" max="255" value="%PPWM%" id="PPWM" name="PPWM" oninput="document.getElementById('ppwm_val').value = this.value">
         </label><br>
@@ -20,22 +20,29 @@
         <label>Enable Pump 4<input type="checkbox" id="P4" name="P4" %P4%></label><br>
         <label>Pumping time&nbsp<input type="number" id="PT" name="PT" min="0" max="10000" value="%PT%" step="100">ms</label>
       </div>
-      <h2>Mixer</h2>
       <div>
-        <label>PWM&nbsp<output id="mxpwm_val">%MPWM%</output>
-          <input type="range" min="0" max="255" value="%MPWM%" id="MXPWM" name="MXPWM" oninput="document.getElementById('mxpwm_val').value = this.value">
+        <h2>Mixer</h2>
+        <label>PWM&nbsp<output id="mpwm_val">%MPWM%</output>
+          <input type="range" min="0" max="255" value="%MPWM%" id="MPWM" name="MPWM" oninput="document.getElementById('mpwm_val').value = this.value">
         </label><br>
         <label>Enable Mixer<input type="checkbox" id="MX" name="MX" %MX%></label><br>
         <label>Mixing time&nbsp<input type="number" id="MT" name="MT" min="0" max="10000" value="%MT%" step="100">ms</label>
       </div>
-      <h2>HEAD</h2>
       <div>
+        <h2>HEAD</h2>
         <label>PWM</label> <output id="spwm_val">%SPWM%</output>
           <input type="range" min="0" max="255" value="%SPWM%" id="SPWM" name="SPWM" oninput="document.getElementById('spwm_val').value = this.value"><br>
         </label>
         <label>UP&nbsp&nbsp&nbsp<input type="checkbox" id="UP" name="UP" %UP%></label><br>
         <label>DOWN</label> <input type="checkbox" id="DOWN" name="DOWN" %DOWN%></label><br>
         <label>Movement time&nbsp<input type="number" id="ST" name="ST" min="0" max="10000" value="%ST%" step="10">ms</label>
+      </div>
+      <div>
+        <h2>LED</h2>
+        <label>Number of LEDS</label> <output id="no_led">%NLED%</output>
+          <input type="range" min="0" max="%MAXLED%" value="%NLED%" id="NLED" name="NLED" oninput="document.getElementById('no_led').value = this.value"><br>
+        </label>
+        <label>Color&nbsp<input type="color" id="COLOR" name="COLOR" value="%COLOR%"></label>
       </div>
     </form>
   </div>

@@ -1,114 +1,98 @@
 #include <Arduino.h>
-
-#define SERIAL_DEBUG
-// #define LED_TEST
-#define WIFI_TEST
-// #define PUMP_TEST
-// #define HEAD_TEST
-
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 #include <Adafruit_NeoPixel.h>
 
-
 #include <config.h>
+
+
+#define SERIAL_DEBUG
+// #define WEBSERIAL_DEBUG
+// #define LED_TEST
+#define WIFI_TEST
+// #define PUMP_TEST
+// #define HEAD_TEST
+
+#ifdef WEBSERIAL_DEBUG
+  #include <WebSerial.h>
+  #define SER WebSerial
+#else
+  #define SER Serial
+#endif
+
+#define PARAM_INT(name, var, fill) if (request->hasParam(name)) var = request->getParam(name)->value().toInt(); serial_print_parameter(name, var, fill);
+#define PARAM_BOOL(name, var) var = request->hasParam(name); serial_print_parameter(name, var, 0);
+
+void serial_print_parameter(String name, int value, int fill=0)
+{
+  SER.print(" " + name + ":"); 
+  SER.print(value); 
+  for (int i = fill - ((value == 0) ? 1 : 0), v = value; i>0; i--, v/=10) 
+    SER.print((v == 0) ? " " : "");
+}
 
 
 AsyncWebServer server(PORT);
 
 
-int web_pump_pwm = 0,
-    web_mx_pwm   = 0,
-    web_srv_pwm  = 0;
-bool web_pump1_state = false,
-     web_pump2_state = false,
-     web_pump3_state = false,
-     web_pump4_state = false,
-     web_mixer_state = false,
-     web_up_state    = false,
-     web_down_state  = false;
-unsigned long web_pump_time = 0,
-              web_mixer_time = 0,
-              web_head_time = 0;
+int pump_pwm = 0,
+    mixer_pwm   = 0,
+    servo_pwm  = 0,
+    pump_time   = 0,
+    mixer_time  = 0,
+    head_time   = 0;
+bool pump1_enable = false,
+     pump2_enable = false,
+     pump3_enable = false,
+     pump4_enable = false,
+     mixer_enable = false,
+     up_enable    = false,
+     down_enable  = false;
+int web_number_of_leds  = 20,
+    web_led_red         = 255,
+    web_led_green       = 255,
+    web_led_blue        = 255;
 
 
-#define SERIAL_FILL_VAR(value, fill) for (int i = fill - ((value == 0) ? 1 : 0), v = value; i>0; i--, v/=10) Serial.print((v == 0) ? " " : "");
 
 #ifdef WIFI_TEST
   void setup_wifi_ap()
   {
-    Serial.print("Setting soft-AP ... ");
-    // Serial.println(WiFi.softAP(SSID, PASSWORD, 1, false, 1) ? "Ready" : "Failed!");
-    Serial.println(WiFi.softAP(SSID, PASSWORD) ? "Ready" : "Failed!");
+    SER.print("Setting soft-AP ... ");
+    // SER.println(WiFi.softAP(SSID, PASSWORD, 1, false, 1) ? "Ready" : "Failed!");
+    SER.println(WiFi.softAP(SSID, PASSWORD) ? "Ready" : "Failed!");
 
-    Serial.print("SSID:     ");
-    Serial.println(SSID);
-    Serial.print("PASSWORD: ");
-    Serial.println(PASSWORD);
-    Serial.print("IP:       ");
-    Serial.println(WiFi.softAPIP());
+    SER.print("SSID:     ");
+    SER.println(SSID);
+    SER.print("PASSWORD: ");
+    SER.println(PASSWORD);
+    SER.print("IP:       ");
+    SER.println(WiFi.softAPIP().toString());
+
   }
 
   String processor(const String& var){
-    if (var == "PPWM")
-    {
-      return String(web_pump_pwm);
-    }
-    else if (var == "P1")
-    {
-      return web_pump1_state ? "checked" : "";
-    }
-    else if (var == "P2")
-    {
-      return web_pump2_state ? "checked" : "";
-    }
-    else if (var == "P3")
-    {
-      return web_pump3_state ? "checked" : "";
-    }
-    else if (var == "P4")
-    {
-      return web_pump4_state ? "checked" : "";
-    }
-    else if (var == "PT")
-    {
-      return String(web_pump_time);
-    }
-    else if (var == "MPWM")
-    {
-      return String(web_mx_pwm);
-    }
-    else if (var == "MX")
-    {
-      return web_mixer_state ? "checked" : "";
-    }
-    else if (var == "MT")
-    {
-      return String(web_mixer_time);
-    }
-    else if (var == "SPWM")
-    {
-      return String(web_srv_pwm);
-    }
-    else if (var == "UP")
-    {
-      return web_up_state ? "checked" : "";
-    }
-    else if (var == "DOWN")
-    {
-      return web_down_state ? "checked" : "";
-    }
-    else if (var == "ST")
-    {
-      return String(web_head_time);
-    }
-    else
-    {
-      Serial.print("   Unknown processor Var:");
-      Serial.println(var.c_str());
-    }
+    if (var == "PPWM")        return String(pump_pwm);
+    else if (var == "P1")     return pump1_enable ? "checked" : "";
+    else if (var == "P2")     return pump2_enable ? "checked" : "";
+    else if (var == "P3")     return pump3_enable ? "checked" : "";
+    else if (var == "P4")     return pump4_enable ? "checked" : "";
+    else if (var == "PT")     return String(pump_time);
+    else if (var == "MPWM")   return String(mixer_pwm);
+    else if (var == "MX")     return mixer_enable ? "checked" : "";
+    else if (var == "MT")     return String(mixer_time);
+    else if (var == "SPWM")   return String(servo_pwm);
+    else if (var == "UP")     return up_enable ? "checked" : "";
+    else if (var == "DOWN")   return down_enable ? "checked" : "";
+    else if (var == "ST")     return String(head_time);
+    else if (var == "NLED")   return String(NUMPIXELS);
+    else if (var == "MAXLED") return String(NUMPIXELS);
+    else if (var == "COLOR")  return "#" + String((web_led_red << 16) + (web_led_green << 8) + web_led_blue, 16);
+
+    SER.print("   Unknown processor Var:");
+    SER.println(var.c_str());
     return String();
   }
 
@@ -117,93 +101,64 @@ unsigned long web_pump_time = 0,
 
     if (!LittleFS.begin())
     {
-        Serial.printf("An Error has occurred while mounting LittleFS");
+        SER.print("An Error has occurred while mounting LittleFS");
         return;
     }
-    // AsyncElegantOTA.begin(&server);
 
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-      Serial.println();
-      Serial.print("Requested home page ");
-      Serial.println(LittleFS.exists("/index_test.html") ? "File found" : "File not found");
+      SER.println();
+      SER.print("Requested home page... ");
+      SER.println(LittleFS.exists("/index_test.html") ? "File found" : "File not found");
       request->send(LittleFS, "/index_test.html", String(), false, processor);
     });
 
     server.on("/send", HTTP_GET, [](AsyncWebServerRequest *request) {
-      Serial.println();
-      Serial.println("WEB Update recieved");
-      Serial.print("WEB Pumps:");
-      if (request->hasParam("PPWM"))
-        web_pump_pwm = request->getParam("PPWM")->value().toInt();
-      Serial.print(" PWM:");
-      Serial.print(web_pump_pwm);
-      SERIAL_FILL_VAR(web_pump_pwm, 3)
+      SER.println();
+      SER.println("WEB Update recieved");
+
+      SER.print("WEB Pumps:");
+      PARAM_INT("PPWM", pump_pwm, 3)
+      PARAM_INT("PT", pump_time, 4)
+      PARAM_BOOL("P1", pump1_enable)      
+      PARAM_BOOL("P2", pump2_enable)      
+      PARAM_BOOL("P3", pump3_enable)      
+      PARAM_BOOL("P4", pump4_enable)      
+      SER.println();
       
-      if (request->hasParam("PT"))  
-        web_pump_time = request->getParam("PT")->value().toInt();
-      Serial.print(" PT:");
-      Serial.print(web_pump_time);
-      SERIAL_FILL_VAR(web_pump_time, 4)
+      SER.print("WEB Mixer:");
+      PARAM_INT("MPWM", mixer_pwm, 3)
+      PARAM_INT("MT", mixer_time, 4)
+      PARAM_BOOL("MX", mixer_enable)
+      SER.println();
 
-      web_pump1_state = request->hasParam("P1");
-      Serial.print(" P1:");
-      Serial.print(web_pump1_state);
+      SER.print("WEB Servo:");
+      PARAM_INT("SPWM", servo_pwm, 3)
+      PARAM_INT("ST", head_time, 4)
+      PARAM_BOOL("UP", up_enable)
+      PARAM_BOOL("DOWN", down_enable)
+      SER.println();
       
-      web_pump2_state = request->hasParam("P2");
-      Serial.print(" P2:");
-      Serial.print(web_pump2_state);
 
-      web_pump3_state = request->hasParam("P3");
-      Serial.print(" P3:");
-      Serial.print(web_pump3_state);
-
-      web_pump4_state = request->hasParam("P4");
-      Serial.print(" P4:");
-      Serial.println(web_pump4_state);
-
-
-      Serial.print("WEB Mixer:");
-      if (request->hasParam("MXPWM"))
-        web_mx_pwm = request->getParam("MXPWM")->value().toInt();
-      Serial.print(" PWM:");
-      Serial.print(web_mx_pwm);
-      SERIAL_FILL_VAR(web_mx_pwm, 3)
-
-      if (request->hasParam("MT"))
-        web_mixer_time = request->getParam("MT")->value().toInt();
-      Serial.print(" MT:");
-      Serial.print(web_mixer_time);
-      SERIAL_FILL_VAR(web_mixer_time, 4)
-
-      web_mixer_state = request->hasParam("MX");
-      Serial.print(" MX:");
-      Serial.println(web_mixer_state);
-
-
-      Serial.print("WEB Servo:");
-      if (request->hasParam("SPWM"))
-        web_srv_pwm = request->getParam("SPWM")->value().toInt();
-      Serial.print(" PWM:");
-      Serial.print(web_srv_pwm);
-      SERIAL_FILL_VAR(web_srv_pwm, 3)
-
-      if (request->hasParam("ST"))
-        web_head_time = request->getParam("ST")->value().toInt();
-      Serial.print(" ST:");
-      Serial.print(web_head_time);
-      SERIAL_FILL_VAR(web_head_time, 4)
-
-      web_up_state = request->hasParam("UP");
-      Serial.print(" UP:");
-      Serial.print(web_up_state);
-
-      web_down_state = request->hasParam("DOWN");
-      Serial.print(" DOWN:");
-      Serial.println(web_down_state);
+      SER.print("WEB Led:  ");
+      PARAM_INT("NLED", web_number_of_leds, 3)
+      if (request->hasParam("COLOR"))
+      {
+        int color = (int) strtol(&(request->getParam("COLOR")->value().c_str()[1]), NULL, HEX);
+        web_led_blue = color & 0xff;
+        web_led_green = (color >> 8) & 0xff;
+        web_led_red = color >> 16;
+      }
+      SER.print(" C:");
+      SER.print(request->hasParam("COLOR") ? request->getParam("COLOR")->value() : "#______");
+      serial_print_parameter("(r:", web_led_red, 3);
+      serial_print_parameter("g:", web_led_green, 3);
+      serial_print_parameter("b:", web_led_blue, 3);
+      SER.println(")");
 
       request->redirect("/");
     });
 
+    // AsyncElegantOTA.begin(&server);
     server.begin();
   }
 #endif
@@ -240,10 +195,10 @@ unsigned long web_pump_time = 0,
 
     if ( last_motor_state != motors_state or last_motor_pwm_freq != pwm_freq)
     {
-      Serial.print("PWM: ");
-      Serial.print(pwm_freq);
-      Serial.print(" State: ");
-      Serial.println(motors_state ? "1" : "0");
+      SER.print("PWM: ");
+      SER.print(pwm_freq);
+      SER.print(" State: ");
+      SER.println(motors_state ? "1" : "0");
     }
 
     last_motor_state = motors_state;
@@ -298,16 +253,16 @@ unsigned long web_pump_time = 0,
     
     if (last_down_state != srv_down || last_up_state != srv_up || last_mx_state != mx_enable)
     {
-      Serial.print("Mixer PWM: ");
-      Serial.print(mx_pwm_freq);
-      Serial.print(" EN: ");
-      Serial.print(mx_enable ? "1" : "0");
-      Serial.print("    Servo PWM: ");
-      Serial.print(srv_pwm_freq);
-      Serial.print(" /\\: ");
-      Serial.print(srv_up ? "1" : "0");
-      Serial.print(" \\/: ");
-      Serial.println(srv_down ? "1" : "0");
+      SER.print("Mixer PWM: ");
+      SER.print(mx_pwm_freq);
+      SER.print(" EN: ");
+      SER.print(mx_enable ? "1" : "0");
+      SER.print("    Servo PWM: ");
+      SER.print(srv_pwm_freq);
+      SER.print(" /\\: ");
+      SER.print(srv_up ? "1" : "0");
+      SER.print(" \\/: ");
+      SER.println(srv_down ? "1" : "0");
     }
     last_down_state = srv_down;
     last_up_state = srv_up;
@@ -341,42 +296,43 @@ unsigned long web_pump_time = 0,
 
 void setup()
 {
-  #ifdef SERIAL_DEBUG
-    Serial.begin(115200);
-    delay(2000);
+  #if defined(SERIAL_DEBUG)
+    SER.begin(115200);
+  #elif defined(WEBSERIAL_DEBUG)
+    SER.begin(&server);
   #endif
   
-  Serial.println("Setup started");
+  SER.println("Setup started");
   
   #if defined(LED_TEST) && ! defined(SERIAL_DEBUG)
-    Serial.print("LED setup... ");
+    SER.print("LED setup... ");
     setup_led();
-    Serial.println("done");
+    SER.println("done");
   #endif
   
   
   #ifdef PUMP_TEST
-    Serial.print("Pumps setup... ");
+    SER.print("Pumps setup... ");
     setup_pumps();
-    Serial.println("done");
+    SER.println("done");
   #endif
 
   #ifdef HEAD_TEST
-    Serial.print("Head setup... ");
+    SER.print("Head setup... ");
     setup_head();
-    Serial.println("done");
+    SER.println("done");
   #endif
   
   #ifdef WIFI_TEST
     setup_wifi_ap();
-    Serial.print("Server setup...");
+    SER.print("Server setup...");
     setup_server();
-    Serial.println("done");
-    Serial.print("Server running on port: ");
-    Serial.println(PORT);
+    SER.println("done");
+    SER.print("Server running on port: ");
+    SER.println(PORT);
   #endif
 
-  Serial.println("Setup complete");
+  SER.println("Setup complete");
 }
 
 void loop() {
