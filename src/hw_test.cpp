@@ -2,9 +2,9 @@
 
 #define SERIAL_DEBUG
 // #define LED_TEST
-// #define WIFI_TEST
+#define WIFI_TEST
 // #define PUMP_TEST
-#define HEAD_TEST
+// #define HEAD_TEST
 
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
@@ -12,11 +12,26 @@
 #include <LittleFS.h>
 #include <Adafruit_NeoPixel.h>
 
+
 #include <config.h>
 
 
 AsyncWebServer server(PORT);
 
+
+int web_pump_pwm = 0,
+    web_mx_pwm   = 0,
+    web_srv_pwm  = 0;
+bool web_pump1_state = false,
+     web_pump2_state = false,
+     web_pump3_state = false,
+     web_pump4_state = false,
+     web_mixer_state = false,
+     web_up_state    = false,
+     web_down_state  = false;
+unsigned long web_pump_time = 0,
+              web_mixer_time = 0,
+              web_head_time = 0;
 
 #ifdef WIFI_TEST
   void setup_wifi_ap()
@@ -34,6 +49,63 @@ AsyncWebServer server(PORT);
   }
 
   String processor(const String& var){
+    if (var == "PPWM")
+    {
+      return String(web_pump_pwm);
+    }
+    else if (var == "P1")
+    {
+      return web_pump1_state ? "checked" : "";
+    }
+    else if (var == "P2")
+    {
+      return web_pump2_state ? "checked" : "";
+    }
+    else if (var == "P3")
+    {
+      return web_pump3_state ? "checked" : "";
+    }
+    else if (var == "P4")
+    {
+      return web_pump4_state ? "checked" : "";
+    }
+    else if (var == "PT")
+    {
+      return String(web_pump_time);
+    }
+    else if (var == "MPWM")
+    {
+      return String(web_mx_pwm);
+    }
+    else if (var == "MX")
+    {
+      return web_mixer_state ? "checked" : "";
+    }
+    else if (var == "MT")
+    {
+      return String(web_mixer_time);
+    }
+    else if (var == "SPWM")
+    {
+      return String(web_srv_pwm);
+    }
+    else if (var == "UP")
+    {
+      return web_up_state ? "checked" : "";
+    }
+    else if (var == "DOWN")
+    {
+      return web_down_state ? "checked" : "";
+    }
+    else if (var == "ST")
+    {
+      return String(web_head_time);
+    }
+    else
+    {
+      Serial.print("   Unknown processor Var:");
+      Serial.println(var.c_str());
+    }
     return String();
   }
 
@@ -48,10 +120,81 @@ AsyncWebServer server(PORT);
     // AsyncElegantOTA.begin(&server);
 
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-              Serial.print("requested home page ");
-              Serial.println(LittleFS.exists("/index_test.html") ? "File found" : "File not found");
-              request->send(LittleFS, "/index_test.html", String(), false, processor);
-          });
+      Serial.println();
+      Serial.print("Requested home page ");
+      Serial.println(LittleFS.exists("/index_test.html") ? "File found" : "File not found");
+      request->send(LittleFS, "/index_test.html", String(), false, processor);
+    });
+
+    server.on("/send", HTTP_GET, [](AsyncWebServerRequest *request) {
+      Serial.println();
+      Serial.println("WEB Update recieved");
+      Serial.print("WEB Pumps:");
+      if (request->hasParam("PPWM"))
+        web_pump_pwm = request->getParam("PPWM")->value().toInt();
+      Serial.print(" PWM:");
+      Serial.print(web_pump_pwm);
+
+      if (request->hasParam("PT"))  
+        web_pump_time = request->getParam("PT")->value().toInt();
+      Serial.print(" PT:");
+      Serial.print(web_pump_time);
+
+      web_pump1_state = request->hasParam("P1");
+      Serial.print(" P1:");
+      Serial.print(web_pump1_state);
+      
+      web_pump2_state = request->hasParam("P2");
+      Serial.print(" P2:");
+      Serial.print(web_pump2_state);
+
+      web_pump3_state = request->hasParam("P3");
+      Serial.print(" P3:");
+      Serial.print(web_pump3_state);
+
+      web_pump4_state = request->hasParam("P4");
+      Serial.print(" P4:");
+      Serial.println(web_pump4_state);
+
+
+      Serial.print("WEB Mixer:");
+      if (request->hasParam("MXPWM"))
+        web_mx_pwm = request->getParam("MXPWM")->value().toInt();
+      Serial.print(" PWM:");
+      Serial.print(web_mx_pwm);
+
+      if (request->hasParam("MT"))
+        web_mixer_time = request->getParam("MT")->value().toInt();
+      Serial.print(" MT:");
+      Serial.print(web_mixer_time);
+
+      web_mixer_state = request->hasParam("MX");
+      Serial.print(" MX:");
+      Serial.println(web_mixer_state);
+
+
+      Serial.print("WEB Servo:");
+      if (request->hasParam("SPWM"))
+        web_srv_pwm = request->getParam("SPWM")->value().toInt();
+      Serial.print(" PWM:");
+      Serial.print(web_srv_pwm);
+
+      if (request->hasParam("ST"))
+        web_head_time = request->getParam("ST")->value().toInt();
+      Serial.print(" ST:");
+
+      web_up_state = request->hasParam("UP");
+      Serial.print(" UP:");
+      Serial.print(web_up_state);
+
+      web_down_state = request->hasParam("DOWN");
+      Serial.print(" DOWN:");
+      Serial.println(web_down_state);
+
+      Serial.print(web_head_time);
+
+      request->redirect("/");
+    });
 
     server.begin();
   }

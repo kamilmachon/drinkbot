@@ -1,24 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>ESP8266 LittleFS WEB SERVER</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-  <link rel="stylesheet" type="text/css" href="style.css">
+  <title>HARDWARE TEST</title>
 </head>
 <body>
-  <h2>ESP8266 LittleFS WEB SERVER</h2>
-  <div class="content">
-    <div class="card-grid">
-        <div class="card">
-  <p><i class="fas fa-lightbulb fa-2x" style="color:#c81919;"></i> <strong>GPIO2</strong></p>
-  <p>GPIO state: <strong> %GPIO_STATE%</strong></p>
-  <p>
-  <a href="/led2on"><button class="button">ON</button></a>
-  <a href="/led2off"><button class="button button2">OFF</button></a></p>
-  </div>
-  </div>
+  <h1>KURWIGRZMOT HARDWARE TEST</h1>
+
+  <div>
+    <form action="/send">
+      <input type="submit" value="Send values">
+      <h2>Pumps</h2>
+      <div>
+        <label>PWM&nbsp<output id="ppwm_val">%PPWM%</output>
+          <input type="range" min="0" max="255" value="%PPWM%" id="PPWM" name="PPWM" oninput="document.getElementById('ppwm_val').value = this.value">
+        </label><br>
+        <label>Enable Pump 1<input type="checkbox" id="P1" name="P1" %P1%></label><br>
+        <label>Enable Pump 2<input type="checkbox" id="P2" name="P2" %P2%></label><br>
+        <label>Enable Pump 3<input type="checkbox" id="P3" name="P3" %P3%></label><br>
+        <label>Enable Pump 4<input type="checkbox" id="P4" name="P4" %P4%></label><br>
+        <label>Pumping time&nbsp<input type="number" id="PT" name="PT" min="0" max="10000" value="%PT%" step="100">ms</label>
+      </div>
+      <h2>Mixer</h2>
+      <div>
+        <label>PWM&nbsp<output id="mxpwm_val">%MPWM%</output>
+          <input type="range" min="0" max="255" value="%MPWM%" id="MXPWM" name="MXPWM" oninput="document.getElementById('mxpwm_val').value = this.value">
+        </label><br>
+        <label>Enable Mixer<input type="checkbox" id="MX" name="MX" %MX%></label><br>
+        <label>Mixing time&nbsp<input type="number" id="MT" name="MT" min="0" max="10000" value="%MT%" step="100">ms</label>
+      </div>
+      <h2>HEAD</h2>
+      <div>
+        <label>PWM</label> <output id="spwm_val">%SPWM%</output>
+          <input type="range" min="0" max="255" value="%SPWM%" id="SPWM" name="SPWM" oninput="document.getElementById('spwm_val').value = this.value"><br>
+        </label>
+        <label>UP&nbsp&nbsp&nbsp<input type="checkbox" id="UP" name="UP" %UP%></label><br>
+        <label>DOWN</label> <input type="checkbox" id="DOWN" name="DOWN" %DOWN%></label><br>
+        <label>Movement time&nbsp<input type="number" id="ST" name="ST" min="0" max="10000" value="%ST%" step="10">ms</label>
+      </div>
+    </form>
   </div>
 </body>
 </html>
+
+
