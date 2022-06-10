@@ -8,12 +8,13 @@
 #include <config.h>
 
 
-#define SERIAL_DEBUG
+// #define SERIAL_DEBUG
 // #define WEBSERIAL_DEBUG
-// #define LED_TEST
 #define WIFI_TEST
+
 // #define PUMP_TEST
 // #define HEAD_TEST
+#define LED_TEST
 
 #ifdef WEBSERIAL_DEBUG
   #include <WebSerial.h>
@@ -22,16 +23,7 @@
   #define SER Serial
 #endif
 
-#define PARAM_INT(name, var, fill) if (request->hasParam(name)) var = request->getParam(name)->value().toInt(); serial_print_parameter(name, var, fill);
-#define PARAM_BOOL(name, var) var = request->hasParam(name); serial_print_parameter(name, var, 0);
 
-void serial_print_parameter(String name, int value, int fill=0)
-{
-  SER.print(" " + name + ":"); 
-  SER.print(value); 
-  for (int i = fill - ((value == 0) ? 1 : 0), v = value; i>0; i--, v/=10) 
-    SER.print((v == 0) ? " " : "");
-}
 
 
 AsyncWebServer server(PORT);
@@ -58,6 +50,17 @@ int web_number_of_leds  = 20,
 
 
 #ifdef WIFI_TEST
+  #define PARAM_INT(name, var, fill) if (request->hasParam(name)) var = request->getParam(name)->value().toInt(); serial_print_parameter(name, var, fill);
+  #define PARAM_BOOL(name, var) var = request->hasParam(name); serial_print_parameter(name, var, 0);
+
+  void serial_print_parameter(String name, int value, int fill=0)
+  {
+    SER.print(" " + name + ":"); 
+    SER.print(value); 
+    for (int i = fill - ((value == 0) ? 1 : 0), v = value; i>0; i--, v/=10) 
+      SER.print((v == 0) ? " " : "");
+  }
+
   void setup_wifi_ap()
   {
     SER.print("Setting soft-AP ... ");
@@ -294,6 +297,7 @@ int web_number_of_leds  = 20,
   }
 #endif
 
+#pragma region SETUP
 void setup()
 {
   #if defined(SERIAL_DEBUG)
@@ -334,7 +338,9 @@ void setup()
 
   SER.println("Setup complete");
 }
+#pragma endregion SETUP
 
+#pragma region LOOP
 void loop() {
   #if defined(LED_TEST) && ! defined(SERIAL_DEBUG)
     loop_led();
@@ -353,6 +359,4 @@ void loop() {
   #endif
   
 }
-
-
-
+#pragma endregion LOOP
