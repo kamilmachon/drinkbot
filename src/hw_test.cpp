@@ -12,9 +12,11 @@
 // #define WEBSERIAL_DEBUG
 #define WIFI_TEST
 
-// #define PUMP_TEST
+#define PUMP_TEST
+// #define PUMP_AUTO_TEST
 // #define HEAD_TEST
-#define LED_TEST
+// #define LED_TEST
+// #define LED_AUTO_TEST
 
 #ifdef WEBSERIAL_DEBUG
   #include <WebSerial.h>
@@ -22,8 +24,6 @@
 #else
   #define SER Serial
 #endif
-
-
 
 
 AsyncWebServer server(PORT);
@@ -35,10 +35,7 @@ int pump_pwm = 0,
     pump_time   = 0,
     mixer_time  = 0,
     head_time   = 0;
-bool pump1_enable = false,
-     pump2_enable = false,
-     pump3_enable = false,
-     pump4_enable = false,
+bool pump_enable[4],
      mixer_enable = false,
      up_enable    = false,
      down_enable  = false;
@@ -78,10 +75,10 @@ int web_number_of_leds  = 20,
 
   String processor(const String& var){
     if (var == "PPWM")        return String(pump_pwm);
-    else if (var == "P1")     return pump1_enable ? "checked" : "";
-    else if (var == "P2")     return pump2_enable ? "checked" : "";
-    else if (var == "P3")     return pump3_enable ? "checked" : "";
-    else if (var == "P4")     return pump4_enable ? "checked" : "";
+    else if (var == "P1")     return pump_enable[0] ? "checked" : "";
+    else if (var == "P2")     return pump_enable[1] ? "checked" : "";
+    else if (var == "P3")     return pump_enable[2] ? "checked" : "";
+    else if (var == "P4")     return pump_enable[3] ? "checked" : "";
     else if (var == "PT")     return String(pump_time);
     else if (var == "MPWM")   return String(mixer_pwm);
     else if (var == "MX")     return mixer_enable ? "checked" : "";
@@ -122,10 +119,10 @@ int web_number_of_leds  = 20,
       SER.print("WEB Pumps:");
       PARAM_INT("PPWM", pump_pwm, 3)
       PARAM_INT("PT", pump_time, 4)
-      PARAM_BOOL("P1", pump1_enable)      
-      PARAM_BOOL("P2", pump2_enable)      
-      PARAM_BOOL("P3", pump3_enable)      
-      PARAM_BOOL("P4", pump4_enable)      
+      PARAM_BOOL("P1", pump_enable[0])
+      PARAM_BOOL("P2", pump_enable[1])
+      PARAM_BOOL("P3", pump_enable[2])
+      PARAM_BOOL("P4", pump_enable[3])
       SER.println();
       
       SER.print("WEB Mixer:");
@@ -184,35 +181,70 @@ int web_number_of_leds  = 20,
     digitalWrite(M4_FWD_PIN, 0);    // pump 1
   }
 
-  bool last_motor_state = false;
-  int last_motor_pwm_freq = 0;
-
-  void loop_pumps()
-  {
-    unsigned long time = millis(),
-                  update_rate = 5000,
-                  iter = time / update_rate;
-
-    int pwm_freq = ((iter % 2) + 1) * 128 -1;
-    bool motors_state = time % update_rate < update_rate / 2;
-
-    if ( last_motor_state != motors_state or last_motor_pwm_freq != pwm_freq)
+  #ifdef PUMP_AUTO_TEST
+    bool last_motor_state = false;
+    int last_motor_pwm_freq = 0;
+    
+    void loop_pumps()
     {
-      SER.print("PWM: ");
-      SER.print(pwm_freq);
-      SER.print(" State: ");
-      SER.println(motors_state ? "1" : "0");
+      unsigned long time = millis(),
+                    update_rate = 5000,
+                    iter = time / update_rate;
+
+      int pwm_freq = ((iter % 2) + 1) * 128 -1;
+      bool motors_state = time % update_rate < update_rate / 2;
+
+      if ( last_motor_state != motors_state or last_motor_pwm_freq != pwm_freq)
+      {
+        SER.print("PWM: ");
+        SER.print(pwm_freq);
+        SER.print(" State: ");
+        SER.println(motors_state ? "1" : "0");
+      }
+
+      last_motor_state = motors_state;
+      last_motor_pwm_freq = pwm_freq;
+
+      analogWrite(PUMPS_PWM_PIN, pwm_freq);
+      digitalWrite(M1_FWD_PIN, motors_state);
+      digitalWrite(M2_FWD_PIN, motors_state);
+      digitalWrite(M3_FWD_PIN, motors_state);
+      digitalWrite(M4_FWD_PIN, motors_state);
     }
+  #else
+    unsigned long pump_end_time[4];
+    bool pump_running[4];
+    int pump_pin[] = {M1_FWD_PIN, M2_FWD_PIN, M3_FWD_PIN, M4_FWD_PIN};
 
-    last_motor_state = motors_state;
-    last_motor_pwm_freq = pwm_freq;
-
-    analogWrite(PUMPS_PWM_PIN, pwm_freq);
-    digitalWrite(M1_FWD_PIN, motors_state);
-    digitalWrite(M2_FWD_PIN, motors_state);
-    digitalWrite(M3_FWD_PIN, motors_state);
-    digitalWrite(M4_FWD_PIN, motors_state);
-  }
+    void loop_pumps()
+    {
+      unsigned long time = millis();
+      analogWrite(PUMPS_PWM_PIN, pump_pwm);
+      for (int i=0; i<3; i++)
+      {
+        if (pump_enable[i])
+        {
+          if (!pump_running[i])
+          {
+            pump_running[i] = true;
+            pump_end_time[i] = time + pump_time;
+            SER.println("+ Pump " + String(i));
+          }
+          else if(pump_end_time[i] < time)
+          {
+            pump_running[i] = false;
+            pump_enable[i] = false;
+            SER.println("- Pump " + String(i));
+          }
+        }
+        else
+        {
+          pump_running[i] = false;
+        }
+        digitalWrite(pump_pin[i], pump_running[i]);
+      }
+    }
+  #endif
 #endif
 
 #ifdef HEAD_TEST
@@ -276,28 +308,56 @@ int web_number_of_leds  = 20,
 #if defined(LED_TEST) && ! defined(SERIAL_DEBUG)
   Adafruit_NeoPixel pixels(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
 
-  void setup_led()
-  {
-    // pinMode(LED_PIN, OUTPUT);
-  }
+  int _nled   = web_number_of_leds,
+      _color  = (web_led_red<<16) + (web_led_green<<8) + web_led_blue;  
 
-  unsigned long last_update = 0;
-  void loop_led()
-  {
-    if (millis() - last_update > 50)
+  #ifdef LED_AUTO_TEST
+    void setup_led()
     {
-      last_update = millis();
-      uint16_t led = (millis() / DELAYVAL) % NUMPIXELS,
-              hue = uint16_t(float(millis() % DELAYVAL) * 65535 / DELAYVAL);
-
       pixels.clear();
-      pixels.setPixelColor(led, pixels.ColorHSV(hue));
       pixels.show();
     }
-  }
+
+    unsigned long last_update = 0;
+    void loop_led()
+    {
+      if (millis() - last_update > 50)
+      {
+        last_update = millis();
+        uint16_t led = (millis() / DELAYVAL) % NUMPIXELS,
+                hue = uint16_t(float(millis() % DELAYVAL) * 65535 / DELAYVAL);
+
+        pixels.clear();
+        pixels.setPixelColor(led, pixels.ColorHSV(hue));
+        pixels.show();
+      }
+    }
+  #else
+    void setup_led()
+    {
+      pixels.clear();
+      for (int i=0; i<_nled; i++)
+        pixels.setPixelColor(i, _color);
+      pixels.show();
+    }
+
+    void loop_led()
+    {
+      int web_color = (web_led_red<<16) + (web_led_green<<8) + web_led_blue;
+      if (_nled != web_number_of_leds or _color != web_color)
+      {
+        _nled = web_number_of_leds;
+        _color = web_color;
+        pixels.clear();
+        for (int i=0; i<_nled; i++)
+          pixels.setPixelColor(i, _color);
+        pixels.show();
+      }
+    }
+  #endif
 #endif
 
-#pragma region SETUP
+
 void setup()
 {
   #if defined(SERIAL_DEBUG)
@@ -338,9 +398,7 @@ void setup()
 
   SER.println("Setup complete");
 }
-#pragma endregion SETUP
 
-#pragma region LOOP
 void loop() {
   #if defined(LED_TEST) && ! defined(SERIAL_DEBUG)
     loop_led();
@@ -359,4 +417,3 @@ void loop() {
   #endif
   
 }
-#pragma endregion LOOP
