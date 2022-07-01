@@ -39,7 +39,7 @@ bool pump_enable[4],
      mixer_enable = false,
      up_enable    = false,
      down_enable  = false;
-int web_number_of_leds  = 20,
+int web_number_of_leds  = NUMPIXELS,
     web_led_red         = 255,
     web_led_green       = 255,
     web_led_blue        = 255;
@@ -87,7 +87,7 @@ int web_number_of_leds  = 20,
     else if (var == "UP")     return up_enable ? "checked" : "";
     else if (var == "DOWN")   return down_enable ? "checked" : "";
     else if (var == "ST")     return String(head_time);
-    else if (var == "NLED")   return String(NUMPIXELS);
+    else if (var == "NLED")   return String(web_number_of_leds);
     else if (var == "MAXLED") return String(NUMPIXELS);
     else if (var == "COLOR")  return "#" + String((web_led_red << 16) + (web_led_green << 8) + web_led_blue, 16);
 
@@ -220,7 +220,7 @@ int web_number_of_leds  = 20,
     {
       unsigned long time = millis();
       analogWrite(PUMPS_PWM_PIN, pump_pwm);
-      for (int i=0; i<3; i++)
+      for (int i=0; i<4; i++)
       {
         if (pump_enable[i])
         {
@@ -314,6 +314,7 @@ int web_number_of_leds  = 20,
   #ifdef LED_AUTO_TEST
     void setup_led()
     {
+      pixels.begin();
       pixels.clear();
       pixels.show();
     }
@@ -335,6 +336,7 @@ int web_number_of_leds  = 20,
   #else
     void setup_led()
     {
+      pixels.begin();
       pixels.clear();
       for (int i=0; i<_nled; i++)
         pixels.setPixelColor(i, _color);
