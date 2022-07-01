@@ -14,8 +14,8 @@
 
 #define PUMP_TEST
 // #define PUMP_AUTO_TEST
-// #define HEAD_TEST
-// #define LED_TEST
+#define HEAD_TEST
+#define LED_TEST
 // #define LED_AUTO_TEST
 
 #ifdef WEBSERIAL_DEBUG
@@ -114,7 +114,7 @@ int web_number_of_leds  = NUMPIXELS,
 
     server.on("/send", HTTP_GET, [](AsyncWebServerRequest *request) {
       SER.println();
-      SER.println("WEB Update recieved");
+      SER.println("\nWEB Update recieved");
 
       SER.print("WEB Pumps:");
       PARAM_INT("PPWM", pump_pwm, 3)
@@ -148,17 +148,15 @@ int web_number_of_leds  = NUMPIXELS,
         web_led_green = (color >> 8) & 0xff;
         web_led_red = color >> 16;
       }
-      SER.print(" C:");
-      SER.print(request->hasParam("COLOR") ? request->getParam("COLOR")->value() : "#______");
-      serial_print_parameter("(r:", web_led_red, 3);
-      serial_print_parameter("g:", web_led_green, 3);
-      serial_print_parameter("b:", web_led_blue, 3);
-      SER.println(")");
+      char msg[64];
+      sprintf(msg, "C:%s (r:%i g:%i b:%i)\n",
+              request->hasParam("COLOR") ? request->getParam("COLOR")->value().c_str() : "#______",
+              web_led_red, web_led_green, web_led_blue);
+      SER.print(msg);
 
       request->redirect("/");
     });
 
-    // AsyncElegantOTA.begin(&server);
     server.begin();
   }
 #endif
@@ -263,45 +261,62 @@ int web_number_of_leds  = NUMPIXELS,
     digitalWrite(SRV_DOWN_PIN, 0);  // servo dow
   }
 
-  bool last_mx_state, last_up_state, last_down_state;
+  unsigned long head_end_time, mixer_end_time;
+  bool mixer_running, up_running, down_running;
   void loop_head()
   {
     unsigned long time = millis();
-    int mx_pwm_freq,
-        srv_pwm_freq,
-        iter = time / DELAYVAL;
-    bool mx_enable = false,
-         srv_up = false,
-         srv_down = false;
-
-    mx_pwm_freq = 0, //((iter / 4) % 10) * 20 + 75; // 8V 200
-    srv_pwm_freq = ((iter / 4) % 10) * 20 + 75;
-    srv_up = iter % 4 == 0;
-    srv_down = iter % 4 == 2;
-
-    analogWrite(MX_PWM_PIN, mx_pwm_freq);
-    digitalWrite(MX_FWD_PIN, mx_enable);
-    
-    analogWrite(SRV_PWM_PIN, srv_pwm_freq);
-    digitalWrite(SRV_UP_PIN, srv_up);
-    digitalWrite(SRV_DOWN_PIN, srv_down);
-    
-    if (last_down_state != srv_down || last_up_state != srv_up || last_mx_state != mx_enable)
+    analogWrite(SRV_PWM_PIN, servo_pwm);
+    if (up_enable || down_enable)
     {
-      SER.print("Mixer PWM: ");
-      SER.print(mx_pwm_freq);
-      SER.print(" EN: ");
-      SER.print(mx_enable ? "1" : "0");
-      SER.print("    Servo PWM: ");
-      SER.print(srv_pwm_freq);
-      SER.print(" /\\: ");
-      SER.print(srv_up ? "1" : "0");
-      SER.print(" \\/: ");
-      SER.println(srv_down ? "1" : "0");
+      if (up_enable && down_enable)
+      {
+        up_running = false;
+        down_running = false;
+        up_enable = false;
+        down_enable = false;
+      }
+      else if (!(up_running or down_running))
+      {
+        up_running = up_enable;
+        down_running = down_enable;
+        head_end_time = time + head_time;
+      }
+      else if(head_end_time < time)
+      {
+        up_running = false;
+        down_running = false;
+        up_enable = false;
+        down_enable = false;
+      }
     }
-    last_down_state = srv_down;
-    last_up_state = srv_up;
-    last_mx_state = mx_enable;
+    else
+    {
+      up_running = false;
+      down_running = false;
+    }
+    digitalWrite(SRV_UP_PIN, up_running);
+    digitalWrite(SRV_DOWN_PIN, down_running);
+
+    analogWrite(MX_PWM_PIN, mixer_pwm);
+    if (mixer_enable)
+    {
+      if (!mixer_running)
+      {
+        mixer_running = true;
+        mixer_end_time = time + mixer_time;
+    }
+      else if(mixer_end_time < time)
+      {
+        mixer_enable = false;
+        mixer_running = false;
+      }
+    }
+    else
+    {
+      mixer_running = false;
+    }
+    digitalWrite(MX_FWD_PIN, mixer_running);
   }
 #endif
 
@@ -348,6 +363,9 @@ int web_number_of_leds  = NUMPIXELS,
       int web_color = (web_led_red<<16) + (web_led_green<<8) + web_led_blue;
       if (_nled != web_number_of_leds or _color != web_color)
       {
+        char message[64];
+        sprintf(message, "LED n:%i %i->%i (r:%i g:%i b:%i)\n",_nled, _color, web_color, web_led_red, web_led_green, web_led_blue);
+        SER.print(message);
         _nled = web_number_of_leds;
         _color = web_color;
         pixels.clear();
