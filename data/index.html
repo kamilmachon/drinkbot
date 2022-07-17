@@ -8,33 +8,31 @@
 
 <body>
     <iframe name="hiddenFrame" class="hide"></iframe>
-    <FORM action="/send" method="post" target="hiddenFrame">
+    <FORM action="/send" method="get" target="hiddenFrame">
         <div id="pumps"> 
-                <input type="range" name="pump1" min="0" max="10" value="5" class="slider" id="pump1" oninput="pump1out.value='Pompa 1: ' + this.value + 's'" cls="pump"> 
-                <input type="range" name="pump2" min="0" max="10" value="5" class="slider" id="pump2" oninput="pump2out.value='Pompa 2: ' + this.value + 's'" cls="pump"> 
-                <input type="range" name="pump3" min="0" max="10" value="5" class="slider" id="pump3" oninput="pump3out.value='Pompa 3: ' + this.value + 's'" cls="pump"> 
-                <input type="range" name="pump4" min="0" max="10" value="5" class="slider" id="pump4" oninput="pump4out.value='Pompa 4: ' + this.value + 's'" cls="pump"> 
-                <input type="range" name="shake_time" min="0" max="10000" value="5000" step="1000" class="slider" id="shake_time" cls="pump" oninput="shaketimeout.value='Czas: ' + this.value/1000 + 's'">
+                <input type="range" name="pump1" min="0" max="20" value="5" class="slider" id="pump1" oninput="pump1out.value='Pompa 1: ' + this.value + 's'" cls="pump"> 
+                <input type="range" name="pump2" min="0" max="20" value="5" class="slider" id="pump2" oninput="pump2out.value='Pompa 2: ' + this.value + 's'" cls="pump"> 
+                <input type="range" name="pump3" min="0" max="20" value="5" class="slider" id="pump3" oninput="pump3out.value='Pompa 3: ' + this.value + 's'" cls="pump"> 
+                <input type="range" name="pump4" min="0" max="20" value="5" class="slider" id="pump4" oninput="pump4out.value='Pompa 4: ' + this.value + 's'" cls="pump"> 
+                <input type="range" name="shake_time" min="0" max="10" value="5" step="1" class="slider" id="shake_time" cls="pump" oninput="shaketimeout.value='Czas: ' + this.value + 's'">
                 <output name="pump1out" id="pump1out" cls="pump">Pompa 1: 5 s</output>
                 <output name="pump2out" id="pump2out" cls="pump">Pompa 2: 5 s</output>
                 <output name="pump3out" id="pump3out" cls="pump">Pompa 3: 5 s</output> 
                 <output name="pump4out" id="pump4out" cls="pump">Pompa 4: 5 s</output> 
                 <output name="shake_time" id="shaketimeout" cls="pump">Czas: 5 s</output>
         </div>
-        <div id="shakes"> <INPUT type="submit" name="Send" value="Jazda z kurwami"> </div>
+        <div id="shakes"> <INPUT type="submit" name="send" value="Jazda z kurwami"> </div>
     </FORM>
-    <div id="shakes">
+    <div id="stop">
         <form action="/stop" method="get" target="hiddenFrame">
             <input type="submit" name="stopButton" value="Kurwa stoooooj">
         </form>
     </div>
-    <div id="peniorgrid">
-        <div id="buttons">
-            <button type="button" onclick="setPumpValuesToSour()" id="sourButton">Blazej</button> 
-            <button type="button" id="whiskyButton" onclick="setPumpValuesToWhiskyAndCoke()">Cienias</button>
-            <button type="button" id="vocokeButton" onclick="setPumpValuesToVodkaAndCoke()">Chad</button> 
-            <button type="button" id="koluszButton" onclick="setPumpValuesToKolusz()">Kolusz</button>
-        </div>
+    <div id="buttons">
+        <button type="button" onclick="recipe1()" id="recipe1">Nie no to wogole to jest Patrykowy drink</button> 
+        <button type="button" id="whiskyButton" onclick="recipe2()">Whiskey'n'Coke</button>
+        <button type="button" id="vocokeButton" onclick="recipe3()">Vodka'n'Coke</button> 
+        <button type="button" id="koluszButton" onclick="recipe4()">RIP</button>
     </div>
     <script defer> 
         function setPumpValue(pump_id, value) { 
@@ -42,30 +40,29 @@
             pump.value = value; 
             pump.oninput(); 
         }
-        function setPumpValuesToSour() { 
-            console.log('dupa');
-            setPumpValue('pump1', 5);
-            setPumpValue('pump2', 5);
-            setPumpValue('pump3', 5);
-            setPumpValue('pump4', 5); 
+        function recipe1() { 
+            setPumpValue('pump1', 0);
+            setPumpValue('pump2', 12);
+            setPumpValue('pump3', 10);
+            setPumpValue('pump4', 14); 
         }
-        function setPumpValuesToWhiskyAndCoke() { 
-            setPumpValue('pump1', 5); 
-            setPumpValue('pump2', 5); 
-            setPumpValue('pump3', 5);
-            setPumpValue('pump4', 5); 
+        function recipe2() { 
+            setPumpValue('pump1', 2); 
+            setPumpValue('pump2', 2); 
+            setPumpValue('pump3', 2);
+            setPumpValue('pump4', 2); 
         }
-        function setPumpValuesToVodkaAndCoke() {
-            setPumpValue('pump1', 5);
-            setPumpValue('pump2', 5);
-            setPumpValue('pump3', 5);
-            setPumpValue('pump4', 5); 
+        function recipe3() {
+            setPumpValue('pump1', 3);
+            setPumpValue('pump2', 3);
+            setPumpValue('pump3', 3);
+            setPumpValue('pump4', 3); 
         }
-        function setPumpValuesToKolusz() {
-            setPumpValue('pump1', 5);
-            setPumpValue('pump2', 5);
-            setPumpValue('pump3', 5);
-            setPumpValue('pump4', 5); 
+        function recipe4() {
+            setPumpValue('pump1', 4);
+            setPumpValue('pump2', 4);
+            setPumpValue('pump3', 4);
+            setPumpValue('pump4', 4); 
         }
     </script>
     <style>

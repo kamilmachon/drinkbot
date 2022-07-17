@@ -16,17 +16,15 @@
 #define MX_PWM_PIN 2        // Mixer PWM pin    (D4)
 #define MX_FWD_PIN 0        // Mixer run pin    (D3)
 
-// Servo setup
-#define SRV_PWM_DUTY 
+// Servo setup 
 #define SRV_PWM_PIN 3       // Servo PWM pin    (RX)
 #define SRV_UP_PIN 5        // Servo up pin     (D1)
 #define SRV_DOWN_PIN 4      // Servo down pin   (D2)
 
 // LED setup
 #define LED_PIN 1           // LED data pin     (TX)
-#define LED 8
-#define NUMPIXELS 20
-#define DELAYVAL 2000
+#define NUMPIXELS 20        // number of LEDs
+#define DELAYVAL 2000       
 
 
 // WIFI setup
@@ -36,4 +34,4 @@
 IPAddress local_ip(192,168,0,1);
 IPAddress subnet(255,255,255,0);
 IPAddress gateway(192,168,0,1);
-#define PORT 80 //8082
+#define PORT 80

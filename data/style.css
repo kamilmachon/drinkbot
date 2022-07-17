@@ -83,8 +83,18 @@ input[type=range][cls=pump] {
     text-align: center
 }
 
+#stop {
+    position: relative;
+    text-align: center
+}
+
 #pumps {
     padding-bottom: 2vh
+}
+
+#safety {
+    display: flex;
+    justify-content: space-evenly
 }
 
 /* #shake_time {
@@ -96,7 +106,7 @@ output[cls=shakes] {
     position: relative
 }
 
-input[name=Send], input[name=stopButton] {
+input[name=send], input[name=stopButton], input[name=estopButton], input[name=resetButton] {
     background: #a20036;
     background-image: linear-gradient(92.88deg, #991082 9.16%, #af33a5 43.89%, #8729ac 64.72%);
     color: #fff;
