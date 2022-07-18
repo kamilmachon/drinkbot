@@ -7,10 +7,11 @@
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <Servo.h>
+#include <LittleFS.h>
 
 #include "bartender.h"
 #include "recipe.h"
-#include "html.h"
+#include "config.h"
 
 String processor(const String &var)
 {
@@ -31,41 +32,61 @@ public:
     RequestState currentRequestState;
     Recipe currentRecipe;
     Webserver(Servo &srv) : bartender(srv),
-                            server(std::make_unique<AsyncWebServer>(8082))
+                            server(std::make_unique<AsyncWebServer>(PORT))
     {
-        // Initialize SPIFFS
-        if (!SPIFFS.begin())
+        // Initialize LittleFS
+        if (!LittleFS.begin())
         {
-            Serial.printf("An Error has occurred while mounting SPIFFS");
+            Serial.printf("An Error has occurred while mounting LittleFS");
             return;
         }
 
-        WiFi.begin(ssid, password);
-        while (WiFi.status() != WL_CONNECTED)
-        {
-            delay(1000);
-            Serial.println(WiFi.status());
-            Serial.println("Connecting to WiFi..");
-        }
+        // WiFi.begin(SSID, PASSWORD);
+        // while (WiFi.status() != WL_CONNECTED)
+        // {
+        //     delay(1000);
+        //     Serial.println(WiFi.status());
+        //     Serial.println("Connecting to WiFi..");
+        // }
 
-        delay(6000);
-        Serial.println(WiFi.localIP());
+        // ESP as AP
+        // Serial.print("Setting soft-AP configuration ... ");
+        // Serial.println(WiFi.softAPConfig(local_ip, gateway, subnet) ? "Ready" : "Failed!");
+
+        Serial.print("Setting soft-AP ... ");
+        // Serial.println(WiFi.softAP(SSID, PASSWORD, 1, false, 1) ? "Ready" : "Failed!");
+        Serial.println(WiFi.softAP(SSID, PASSWORD) ? "Ready" : "Failed!");
+
+        Serial.print("SSID:     ");
+        Serial.println(SSID);
+        Serial.print("PASSWORD: ");
+        Serial.println(PASSWORD);
+        Serial.print("IP:       ");
+        Serial.println(WiFi.softAPIP());
+        
+
+        // delay(6000);
+        // Serial.println(WiFi.localIP());
 
         server->on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
             Serial.print("requested home page");
-            request->send(SPIFFS, "/index.html", String(), false, processor);
+            request->send(LittleFS, "/index.html", String(), false, processor);
 
         });
         server->on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request) {
             Serial.print("requested css");
-            request->send(SPIFFS, "/style.css", "text/css");
+            request->send(LittleFS, "/style.css", "text/css");
         });
 
         server->on("/send", HTTP_POST, std::bind(&Webserver::handleSendRequest, this, std::placeholders::_1));
         server->on("/stop", HTTP_GET, std::bind(&Webserver::handleStopRequest, this, std::placeholders::_1));
+        
+        
+        
         Serial.println("starting srv");
+        AsyncElegantOTA.begin(server.get());
         server->begin();
-        Serial.println("server began");
+        Serial.println("server running");
     }
 
     void handleSendRequest(AsyncWebServerRequest *request)
@@ -78,7 +99,7 @@ public:
             Serial.println("received send request");
             for (size_t i = 0; i < request->args(); ++i)
             {
-                Serial.printf("%s\n", request->argName(i));
+                Serial.println(request->argName(i));
             }
             float pump_1 = request->getParam("pump1", true)->value().toFloat();
             float pump_2 = request->getParam("pump2", true)->value().toFloat();
