@@ -18,44 +18,56 @@
   #define SER Serial
 #endif
 
+#define max(a,b) (a<b ? b : a)
+#define min(a,b) (a<b ? a : b)
 
 AsyncWebServer server(PORT);
 
 
 int pump_pwm = 200,
     mixer_pwm  = 160,
-    servo_pwm  = 200,
+    servo_pwm  = 160,
     pump_time[4] = {0,0,0,0},
     mixer_time  = 5000,
-    head_time   = 2000;
+    head_time   = 1800;
 
 bool pump_enable[4] = {0,0,0,0},
      mixer_enable = false,
      up_enable    = false,
-     down_enable  = false,
-     prepraing = false;
-
-int web_number_of_leds  = NUMPIXELS,
-    web_led_red         = 255,
-    web_led_green       = 255,
-    web_led_blue        = 255;
+     down_enable  = false;
 
 int ratio = 1000;
+
+Adafruit_NeoPixel pixels(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
+
+unsigned long 
+  ledTime = 0, 
+  ledFreq = 100, // time between led updates in ms
+  transTime = 1000,
+  rainbowTime = NUMPIXELS * 200, // smooth color transition time
+  dripWaitTime = 2000;
+
+uint32_t 
+  lowering_color = pixels.Color(128,128,0),
+  pumping_color = pixels.Color(0,0,255),
+  mixing_color = pixels.Color(255,0,0),
+  drip_color = pixels.Color(0,255,0),
+  raising_color = pixels.Color(128,128,0);
+
 
 unsigned long pump_end_time[4];
 bool pump_running[4];
 int pump_pin[] = {M1_FWD_PIN, M2_FWD_PIN, M3_FWD_PIN, M4_FWD_PIN};
 
-unsigned long head_end_time, mixer_end_time;
+float 
+  pumping_progress = 0,
+  mixing_progress = 0,
+  travel_progress = 0,
+  drip_progress = 0;
+
+unsigned long head_end_time, mixer_end_time, drip_end_time;
 bool mixer_running, up_running, down_running;
 
-void serial_print_parameter(String name, int value, int fill=0)
-{
-  SER.print(" " + name + ":"); 
-  SER.print(value); 
-  for (int i = fill - ((value == 0) ? 1 : 0), v = value; i>0; i--, v/=10) 
-    SER.print((v == 0) ? " " : "");
-}
 
 void setup_wifi_ap()
 {
@@ -105,8 +117,10 @@ enum PreparationState
   pumping = 210,
   start_mixing = 300,
   mixing = 310,
-  start_raising = 400,
-  raising = 410
+  start_drip_wait = 400,
+  drip_wait = 410,
+  start_raising = 500,
+  raising = 510
 } state;
 
 void setup_server()
@@ -130,7 +144,7 @@ void setup_server()
   server.on("/send", HTTP_GET, [](AsyncWebServerRequest *request) {
     SER.println("\n/send revieced");
     
-    if (!prepraing)
+    if (state == PreparationState::idle)
     {
       SER.print("Updating recipe\nWEB Pumps:");
       pump_time[0] = request->hasParam("pump1") ? 
@@ -163,7 +177,18 @@ void setup_server()
 
   server.on("/stop", HTTP_GET, [](AsyncWebServerRequest *request) {
     SER.println("/stop");
-    // TODO: Stop
+    for (int i=0;i<4;i++)
+    {
+      pump_enable[i] = false;
+      pump_running[i] = false;
+    }
+    mixer_enable = false;
+    mixer_running = false;
+    up_enable = false;
+    up_running = false;
+    down_enable = false;
+    down_running = false;
+    state = PreparationState::start_raising;
   });
 
   server.onNotFound([](AsyncWebServerRequest *request) {
@@ -177,6 +202,7 @@ void setup_server()
 void StateMachine()
 {
   bool _running = false, _enable = false;
+  unsigned long time = millis();
   switch (state)
   {
     case PreparationState::idle:
@@ -237,11 +263,32 @@ void StateMachine()
     case PreparationState::mixing:
       if (!mixer_running && !mixer_enable)
       {
-        state = PreparationState::start_raising;
+        state = PreparationState::start_drip_wait;
         SER.println("-> Mixing done");
       }
       break;
     
+    // Wait for drip
+    case PreparationState::start_drip_wait:
+      drip_end_time = time + dripWaitTime;
+      drip_progress = 0;
+      state = PreparationState::drip_wait;
+      SER.println("-> Wait for drip");
+      break;
+
+    case PreparationState::drip_wait:
+      if (drip_end_time < time)
+      {
+        state = PreparationState::start_raising;
+        SER.println("-> Dripping done");
+        drip_progress = 1;
+      }
+      else
+      {
+        drip_progress = float(drip_end_time-time)/(float)dripWaitTime;
+      }
+      break;
+
     // Rasing head
     case PreparationState::start_raising:
       up_enable = true;
@@ -284,6 +331,7 @@ void loop_pumps()
 {
   unsigned long time = millis();
   analogWrite(PUMPS_PWM_PIN, pump_pwm);
+  float progress[4];
   for (int i=0; i<4; i++)
   {
     if (pump_enable[i])
@@ -293,20 +341,30 @@ void loop_pumps()
         pump_running[i] = true;
         pump_end_time[i] = time + pump_time[i];
         SER.println("+ Pump " + String(i));
+        progress[i] = 0;
       }
       else if(pump_end_time[i] < time)
       {
         pump_running[i] = false;
         pump_enable[i] = false;
         SER.println("- Pump " + String(i));
+        progress[i] = 1;
+      }
+      else
+      {
+        progress[i] = float(pump_end_time[i]-time) / (pump_time[i]);
       }
     }
     else
     {
       pump_running[i] = false;
+      progress[i] = 1;
     }
     digitalWrite(pump_pin[i], pump_running[i]);
   }
+  pumping_progress = 1;
+  for (int i=0; i<4; i++)
+    pumping_progress = min(pumping_progress, progress[i]);
 }
 
 void setup_head()
@@ -324,7 +382,6 @@ void setup_head()
   digitalWrite(SRV_DOWN_PIN, 0);  // servo dow
 }
 
-
 void loop_head()
 {
   unsigned long time = millis();
@@ -337,12 +394,14 @@ void loop_head()
       down_running = false;
       up_enable = false;
       down_enable = false;
+      travel_progress = 1;
     }
     else if (!(up_running or down_running))
     {
       up_running = up_enable;
       down_running = down_enable;
       head_end_time = time + head_time;
+      travel_progress = 0;
     }
     else if(head_end_time < time)
     {
@@ -350,12 +409,18 @@ void loop_head()
       down_running = false;
       up_enable = false;
       down_enable = false;
+      travel_progress = 1;
+    }
+    else
+    {
+      travel_progress = float(head_end_time-time) / (float)(head_time);
     }
   }
   else
   {
     up_running = false;
     down_running = false;
+    travel_progress = 1;
   }
   digitalWrite(SRV_UP_PIN, up_running);
   digitalWrite(SRV_DOWN_PIN, down_running);
@@ -371,87 +436,111 @@ void loop_head()
     {
       mixer_running = true;
       mixer_end_time = time + mixer_time;
+      mixing_progress = 0;
     }
     else if(mixer_end_time < time)
     {
       mixer_enable = false;
       mixer_running = false;
+      mixing_progress = 1;
+    }
+    else
+    {
+      mixing_progress = float(mixer_end_time-time) / (float)mixer_time;
     }
   }
   else
   {
     mixer_running = false;
+    mixing_progress = 1;
   }
   digitalWrite(MX_FWD_PIN, mixer_running);
 }
 
 
 #ifndef SERIAL_DEBUG
-  Adafruit_NeoPixel pixels(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
 
-    void setup_led()
+  void setup_led()
+  {
+    pixels.begin();
+    pixels.clear();
+    for (int i=0; i<NUMPIXELS; i++) 
+      pixels.setPixelColor(i, pixels.Color(255,255,255));
+    pixels.show();
+  }
+
+  void set_rainbow()
+  {
+    unsigned long time = millis();
+    int hue = (time % rainbowTime) * 65535 / rainbowTime;
+    pixels.rainbow(hue);
+  }
+
+  void set_color(uint32_t color)
+  { 
+    pixels.fill(color);
+  }
+
+  void set_progress(float progress, uint32_t color_on)
+  {
+    int leds_on = progress * NUMPIXELS;
+    pixels.fill(color_on, leds_on);
+  }
+  
+  void loop_led()
+  {
+    if (millis() - ledTime < ledFreq)
+      return;
+
+    ledTime += ledFreq;
+
+    // pixels.clear();
+    switch (state)
     {
-      pixels.begin();
-      pixels.clear();
-      for (int i=0; i<NUMPIXELS; i++) 
-        pixels.setPixelColor(i, pixels.Color(255,255,255));
+    case idle:
+      set_rainbow();
+      break;
+
+    case start_lowering:
+    case lowering:
+      // set_color(pixels.Color(255,128,0));
+      set_progress(travel_progress, lowering_color);
+      break;
+
+    case start_pumping:
+    case pumping:
+      // set_color(pixels.Color(128,255,0));
+      set_progress(pumping_progress, pumping_color);
+      break;
+
+    case start_mixing:
+    case mixing:
+      // set_color(pixels.Color(255,0,0));
+      set_progress(mixing_progress, mixing_color);
+      break;
+
+    case start_drip_wait:
+    case drip_wait:
+      set_progress(drip_progress, drip_color);
+      break;
+
+    case start_raising:
+    case raising:
+      // set_color(pixels.Color(255,128,0));
+      set_progress(travel_progress, raising_color);
+      break;
+
+    default:
+      break;
+    }
+    if (pixels.canShow())
+    {
       pixels.show();
     }
-
-    void set_rainbow()
-    {
-      int rainbow_time = 5000;
-      for (int led=0; led<NUMPIXELS; led++)
-      {
-        int hue = uint32_t(((millis() + (rainbow_time * led / NUMPIXELS)) % rainbow_time) * 65535 / DELAYVAL);
-        pixels.setPixelColor(led, pixels.ColorHSV(hue));
-      }
-    }
-
-    void set_color(uint32_t color)
-    { 
-      for (int i =0; i<NUMPIXELS; i++)
-        pixels.setPixelColor(i, color);
-    }
-
-    void loop_led()
-    {
-      pixels.clear();
-      switch (state)
-      {
-      case idle:
-        set_rainbow();
-        break;
-
-      case start_lowering:
-      case lowering:
-        set_color(pixels.Color(255,128,0));
-        break;
-
-      case start_pumping:
-      case pumping:
-        set_color(pixels.Color(128,255,0));
-        break;
-
-      case start_mixing:
-      case mixing:
-        set_color(pixels.Color(255,0,0));
-        break;
-
-      case start_raising:
-      case raising:
-        set_color(pixels.Color(255,128,0));
-        break;
-
-      default:
-        break;
-      }
-      pixels.show();
-    
-    }
+  
+  }
 
 #endif
-
 
 void setup()
 {
